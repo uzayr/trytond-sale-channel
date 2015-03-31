@@ -30,7 +30,7 @@ class Sale:
     )
 
     channel_type = fields.Function(
-        fields.Char('Channel Type'), 'on_change_with_channel'
+        fields.Char('Channel Type'), 'on_change_with_channel_type'
     )
 
     @classmethod
@@ -173,7 +173,7 @@ class Sale:
         return res
 
     @fields.depends('channel')
-    def on_change_with_channel(self, name=None):
+    def on_change_with_channel_type(self, name=None):
         """
         Returns the source of the channel
         """

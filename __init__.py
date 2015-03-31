@@ -7,6 +7,7 @@
 """
 from trytond.pool import Pool
 from channel import SaleChannel, ReadUser, WriteUser
+from product import ProductSaleChannelListing, Product
 from sale import Sale
 from user import User
 
@@ -18,5 +19,7 @@ def register():
         WriteUser,
         User,
         Sale,
+        ProductSaleChannelListing,
+        Product,
         module='sale_channel', type_='model'
     )
