@@ -55,8 +55,10 @@ class User:
         Channel = Pool().get('sale.channel')
         Group = Pool().get('res.group')
         User = Pool().get('res.user')
+        Model = Pool().get('ir.model.data')
 
-        sale_admin = Group.search([('name', '=', 'Sales Administrator')])[0]
+        sale_admin_id = Model.get_id('sale', 'group_sale_admin')
+        sale_admin = Group(sale_admin_id)
 
         if sale_admin.id in User.get_groups():
             # If user is sale_admin allow read and write on all channels
