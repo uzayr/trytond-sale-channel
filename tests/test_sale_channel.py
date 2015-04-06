@@ -377,6 +377,41 @@ class TestSaleChannel(BaseTestCase):
 
             txn.cursor.rollback()
 
+    def test_0080_check_create_access(self):
+        """
+        Check user have access to channel
+        """
+        with Transaction().start(DB_NAME, USER, context=CONTEXT) as txn:
+            SALE_ADMIN = USER
+            self.setup_defaults()
+
+            #      USER       Channel1    Channel2    Channel3  Channel4
+            #    sale_user       -           R           RW       RW
+            #    sale_admin     N/A         N/A         N/A      N/A
+
+            # Creating sale with admin(sale_admin) user
+            sale1 = self.create_sale(SALE_ADMIN, self.channel1)
+            sale2 = self.create_sale(SALE_ADMIN, self.channel2)
+            sale3 = self.create_sale(SALE_ADMIN, self.channel3)
+
+            with Transaction().set_user(self.sales_user_id):
+                with self.assertRaises(UserError):
+                    self.Sale.copy([sale1])
+
+                copy_sale2, = self.Sale.copy([sale2])
+                self.assertNotEqual(copy_sale2, sale2)
+                # Assert with sale_users current channel
+                self.assertNotEqual(copy_sale2.channel, sale2.channel)
+                self.assertEqual(
+                    copy_sale2.channel, self.sales_user.current_channel
+                )
+
+                copy_sale3, = self.Sale.copy([sale3])
+                self.assertNotEqual(copy_sale3, sale3)
+                self.assertEqual(copy_sale3.channel, sale3.channel)
+
+            txn.cursor.rollback()
+
 
 def suite():
     """

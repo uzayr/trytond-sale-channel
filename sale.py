@@ -180,7 +180,7 @@ class Sale:
         if self.channel:
             return self.channel.source
 
-    def check_create_access(self):
+    def check_create_access(self, silent=False):
         """
             Check sale creation in channel
         """
@@ -191,7 +191,10 @@ class Sale:
             return  # pragma: nocover
 
         if self.channel not in user.allowed_create_channels:
+            if silent:
+                return False
             self.raise_user_error('not_create_channel')
+        return True
 
     @classmethod
     def write(cls, sales, values, *args):
@@ -222,6 +225,16 @@ class Sale:
             sale.check_create_access()
         return sales
 
-    # TODO: On copying an order from a channel the user does not have
-    # create access, default to the current channel of the user. If there
-    # is no current channel, blow up
+    @classmethod
+    def copy(cls, sales, default=None):
+        """
+        Duplicating records
+        """
+        if default is None:
+            default = {}
+
+        for sale in sales:
+            if not sale.check_create_access(True):
+                default['channel'] = cls.default_channel()
+
+        return super(Sale, cls).copy(sales, default=default)
