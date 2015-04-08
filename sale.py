@@ -215,10 +215,11 @@ class Sale:
         User = Pool().get('res.user')
         user = User(Transaction().user)
 
-        if 'channel' not in vlist and not cls.default_channel():
-            cls.raise_user_error(
-                'channel_missing', (user.rec_name,)
-            )  # pragma: nocover
+        for values in vlist:
+            if 'channel' not in values and not cls.default_channel():
+                cls.raise_user_error(
+                    'channel_missing', (user.rec_name,)
+                )  # pragma: nocover
 
         sales = super(Sale, cls).create(vlist)
         for sale in sales:
