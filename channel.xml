@@ -13,7 +13,7 @@
             <field name="name">sale_channel_form</field>
         </record>
         <record model="ir.action.act_window" id="act_sale_channel_form">
-            <field name="name">Sale Channel</field>
+            <field name="name">Channels</field>
             <field name="res_model">sale.channel</field>
         </record>
         <record model="ir.action.act_window.view" id="act_sale_channel_form_view_1">
