@@ -48,6 +48,57 @@ class BaseTestCase(unittest.TestCase):
         self.Sequence = POOL.get('ir.sequence')
         self.Group = POOL.get('res.group')
 
+    def _create_coa_minimal(self, company):
+        """Create a minimal chart of accounts
+        """
+        AccountTemplate = POOL.get('account.account.template')
+        Account = POOL.get('account.account')
+
+        account_create_chart = POOL.get(
+            'account.create_chart', type="wizard")
+
+        account_template, = AccountTemplate.search(
+            [('parent', '=', None)]
+        )
+
+        session_id, _, _ = account_create_chart.create()
+        create_chart = account_create_chart(session_id)
+        create_chart.account.account_template = account_template
+        create_chart.account.company = company
+        create_chart.transition_create_account()
+
+        receivable, = Account.search([
+            ('kind', '=', 'receivable'),
+            ('company', '=', company),
+        ])
+        payable, = Account.search([
+            ('kind', '=', 'payable'),
+            ('company', '=', company),
+        ])
+        create_chart.properties.company = company
+        create_chart.properties.account_receivable = receivable
+        create_chart.properties.account_payable = payable
+        create_chart.transition_create_properties()
+
+    def get_account_by_kind(self, kind, company=None, silent=True):
+        """Returns an account with given spec
+        :param kind: receivable/payable/expense/revenue
+        :param silent: dont raise error if account is not found
+        """
+        Account = POOL.get('account.account')
+        Company = POOL.get('company.company')
+
+        if company is None:
+            company, = Company.search([], limit=1)
+
+        accounts = Account.search([
+            ('kind', '=', kind),
+            ('company', '=', company)
+        ], limit=1)
+        if not accounts and not silent:
+            raise Exception("Account not found")
+        return accounts and accounts[0].id or None
+
     def _create_payment_term(self):
         """Create a simple payment term with all advance
         """
@@ -135,6 +186,10 @@ class BaseTestCase(unittest.TestCase):
             company=self.company
         )
         self.price_list.save()
+        self._create_coa_minimal(self.company)
+
+        account_expense = self.get_account_by_kind('expense')
+        account_revenue = self.get_account_by_kind('revenue')
 
         with Transaction().set_context(company=self.company.id):
             self.channel1, self.channel2, self.channel3, self.channel4 = \
@@ -150,6 +205,8 @@ class BaseTestCase(unittest.TestCase):
                     'shipment_method': 'manual',
                     'payment_term': self.payment_term.id,
                     'price_list': self.price_list,
+                    'default_account_expense': account_expense,
+                    'default_account_revenue': account_revenue,
                 }, {
                     'name': 'Channel 2',
                     'code': 'C2',
@@ -163,6 +220,8 @@ class BaseTestCase(unittest.TestCase):
                     'payment_term': self.payment_term.id,
                     'price_list': self.price_list,
                     'read_users': [('add', [self.sales_user.id])],
+                    'default_account_expense': account_expense,
+                    'default_account_revenue': account_revenue,
                 }, {
                     'name': 'Channel 3',
                     'code': 'C3',
@@ -177,6 +236,8 @@ class BaseTestCase(unittest.TestCase):
                     'price_list': self.price_list,
                     'read_users': [('add', [self.sales_user.id])],
                     'create_users': [('add', [self.sales_user.id])],
+                    'default_account_expense': account_expense,
+                    'default_account_revenue': account_revenue,
                 }, {
                     'name': 'Channel 4',
                     'code': 'C4',
@@ -191,6 +252,8 @@ class BaseTestCase(unittest.TestCase):
                     'price_list': self.price_list,
                     'read_users': [('add', [self.sales_user.id])],
                     'create_users': [('add', [self.sales_user.id])],
+                    'default_account_expense': account_expense,
+                    'default_account_revenue': account_revenue,
                 }])
 
         self.sales_user.current_channel = self.channel3

@@ -18,6 +18,11 @@ STATES = {
 }
 DEPENDS = ['active']
 
+PRODUCT_STATES = {
+    'invisible': ~(Eval('source') != 'manual'),
+    'required': Eval('source') != 'manual',
+}
+
 
 class SaleChannel(ModelSQL, ModelView):
     """
@@ -84,6 +89,35 @@ class SaleChannel(ModelSQL, ModelView):
         fields.Many2One('party.party', 'Company Party'),
         'on_change_with_company_party'
     )
+
+    # These fields would be needed at the time of product imports from
+    # external channel
+    default_uom = fields.Many2One(
+        'product.uom', 'Default Product UOM',
+        states=PRODUCT_STATES, depends=['source']
+    )
+
+    default_account_expense = fields.Property(fields.Many2One(
+        'account.account', 'Account Expense', domain=[
+            ('kind', '=', 'expense'),
+            ('company', '=', Eval('company')),
+        ], depends=['company', 'source'], states=PRODUCT_STATES
+    ))
+
+    default_account_revenue = fields.Property(fields.Many2One(
+        'account.account', 'Account Revenue', domain=[
+            ('kind', '=', 'revenue'),
+            ('company', '=', Eval('company')),
+        ], depends=['company', 'source'], states=PRODUCT_STATES,
+    ))
+
+    @staticmethod
+    def default_default_uom():
+        Uom = Pool().get('product.uom')
+
+        unit = Uom.search([('name', '=', 'Unit')])
+
+        return unit and unit[0].id or None
 
     @classmethod
     def get_source(cls):
