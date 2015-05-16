@@ -47,6 +47,9 @@ class BaseTestCase(unittest.TestCase):
         self.Payment_Term = POOL.get('account.invoice.payment_term')
         self.Sequence = POOL.get('ir.sequence')
         self.Group = POOL.get('res.group')
+        self.OrderImportWizard = POOL.get(
+            'sale.channel.orders_import', type='wizard'
+        )
 
     def _create_coa_minimal(self, company):
         """Create a minimal chart of accounts
@@ -474,6 +477,42 @@ class TestSaleChannel(BaseTestCase):
                 self.assertEqual(copy_sale3.channel, sale3.channel)
 
             txn.cursor.rollback()
+
+    def test_0090_check_channel_exception(self):
+        """
+        Check if channel exception is being created
+        """
+        ChannelException = POOL.get('channel.exception')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            sale = self.create_sale(1, self.channel1)
+
+            channel_exception, = ChannelException.create([{
+                'origin': '%s,%s' % (sale.__name__, sale.id),
+                'log': 'Sale has exception',
+                'channel': sale.channel.id,
+            }])
+
+            self.assert_(channel_exception)
+
+    def test_0100_orders_import_wizard(self):
+        """
+        Check orders import wizard
+        """
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+            with Transaction().set_context(
+                    active_id=self.channel1, company=self.company.id
+            ):
+                session_id, start_state, end_state = \
+                    self.OrderImportWizard.create()
+                self.OrderImportWizard.execute(session_id, {}, start_state)
+                with self.assertRaises(UserError):
+                    # UserError is thrown in this case.
+                    # Importing orders feature is not available in this module
+                    self.OrderImportWizard.execute(session_id, {}, 'import_')
 
 
 def suite():

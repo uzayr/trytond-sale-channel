@@ -6,7 +6,10 @@
     :license: BSD, see LICENSE for more details.
 """
 from trytond.pool import Pool
-from channel import SaleChannel, ReadUser, WriteUser
+from channel import (
+    SaleChannel, ReadUser, WriteUser, ChannelException,
+    OrderImportWizard, OrderImportWizardStart
+)
 from product import ProductSaleChannelListing, Product
 from sale import Sale
 from user import User
@@ -17,9 +20,15 @@ def register():
         SaleChannel,
         ReadUser,
         WriteUser,
+        ChannelException,
         User,
         Sale,
         ProductSaleChannelListing,
         Product,
+        OrderImportWizardStart,
         module='sale_channel', type_='model'
+    )
+    Pool.register(
+        OrderImportWizard,
+        module='sale_channel', type_='wizard'
     )
