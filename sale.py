@@ -33,6 +33,23 @@ class Sale:
         fields.Char('Channel Type'), 'on_change_with_channel_type'
     )
 
+    has_channel_exception = fields.Function(
+        fields.Boolean('Has Channel Exception ?'), 'get_has_channel_exception'
+    )
+
+    def get_has_channel_exception(self, name):
+        """
+        Returs True if sale has exception
+        """
+        ChannelException = Pool().get('channel.exception')
+
+        return bool(
+            ChannelException.search([
+                ('origin', '=', '%s,%s' % (self.__name__, self.id)),
+                ('channel', '=', self.channel.id),
+            ])
+        )
+
     @classmethod
     def __setup__(cls):
         super(Sale, cls).__setup__()

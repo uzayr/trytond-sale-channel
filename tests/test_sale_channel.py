@@ -489,6 +489,8 @@ class TestSaleChannel(BaseTestCase):
 
             sale = self.create_sale(1, self.channel1)
 
+            self.assertFalse(sale.has_channel_exception)
+
             channel_exception, = ChannelException.create([{
                 'origin': '%s,%s' % (sale.__name__, sale.id),
                 'log': 'Sale has exception',
@@ -496,6 +498,8 @@ class TestSaleChannel(BaseTestCase):
             }])
 
             self.assert_(channel_exception)
+
+            self.assertTrue(sale.has_channel_exception)
 
     def test_0100_orders_import_wizard(self):
         """
