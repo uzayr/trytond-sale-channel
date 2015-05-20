@@ -501,6 +501,12 @@ class TestSaleChannel(BaseTestCase):
 
             self.assertTrue(sale.has_channel_exception)
 
+            # Mark exception as resolved
+            channel_exception.is_resolved = True
+            channel_exception.save()
+
+            self.assertFalse(sale.has_channel_exception)
+
     def test_0100_orders_import_wizard(self):
         """
         Check orders import wizard

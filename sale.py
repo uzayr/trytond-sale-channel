@@ -47,6 +47,7 @@ class Sale:
             ChannelException.search([
                 ('origin', '=', '%s,%s' % (self.__name__, self.id)),
                 ('channel', '=', self.channel.id),
+                ('is_resolved', '=', False)
             ])
         )
 

@@ -115,7 +115,7 @@ class SaleChannel(ModelSQL, ModelView):
     ))
 
     exceptions = fields.One2Many(
-        'channel.exception', 'channel', 'Exceptions', readonly=True
+        'channel.exception', 'channel', 'Exceptions'
     )
 
     @classmethod
@@ -249,6 +249,11 @@ class ChannelException(ModelSQL, ModelView):
     channel = fields.Many2One(
         "sale.channel", "Channel", required=True, readonly=True
     )
+    is_resolved = fields.Boolean("Is Resolved ?", select=True)
+
+    @staticmethod
+    def default_is_resolved():
+        return False
 
     @classmethod
     def models_get(cls):

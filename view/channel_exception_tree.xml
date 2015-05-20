@@ -2,4 +2,5 @@
 <tree string="Channel Exceptions">
     <field name="channel"/>
     <field name="origin"/>
+    <field name="is_resolved"/>
 </tree>
