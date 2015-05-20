@@ -7,9 +7,9 @@
 """
 from trytond.pool import Pool
 from channel import (
-    SaleChannel, ReadUser, WriteUser, ChannelException,
-    OrderImportWizard, OrderImportWizardStart
+    SaleChannel, ReadUser, WriteUser, ChannelException
 )
+from wizard import OrderImportWizard, OrderImportWizardStart
 from product import ProductSaleChannelListing, Product
 from sale import Sale
 from user import User
