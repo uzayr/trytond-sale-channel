@@ -7,6 +7,7 @@
 """
 from trytond.pool import PoolMeta, Pool
 from trytond.transaction import Transaction
+from trytond.exceptions import UserError
 from trytond.pyson import Eval
 from trytond.model import ModelView, fields, ModelSQL
 
@@ -168,6 +169,22 @@ class SaleChannel(ModelSQL, ModelView):
         if not company:
             company = Company(SaleChannel.default_company())  # pragma: nocover
         return company and company.party.id or None
+
+    @classmethod
+    def import_orders_using_cron(cls, channels):
+        """
+        Cron method to import orders from channels using cron
+
+        Downstream module need not to implement this method.
+        It will automatically call import_orders of the channel
+        Silently pass if import_orders is not implemented
+        """
+        for channel in channels:
+            try:
+                channel.import_orders()
+            except UserError:
+                # Silently pass if method is not implemented
+                pass
 
     def import_orders(self):
         """
