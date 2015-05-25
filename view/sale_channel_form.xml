@@ -32,10 +32,6 @@
             <label string="These values would be needed at the time of creating products, imported from the external channel." id="product_message"
                 colspan="4" yalign="0.0" xalign="0.0" xexpand="1"/>
             <newline/>
-            <label name="default_account_expense"/>
-            <field name="default_account_expense"/>
-            <label name="default_account_revenue"/>
-            <field name="default_account_revenue"/>
             <label name="default_uom"/>
             <field name="default_uom"/>
         </page>

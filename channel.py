@@ -101,20 +101,6 @@ class SaleChannel(ModelSQL, ModelView):
         states=PRODUCT_STATES, depends=['source']
     )
 
-    default_account_expense = fields.Property(fields.Many2One(
-        'account.account', 'Account Expense', domain=[
-            ('kind', '=', 'expense'),
-            ('company', '=', Eval('company')),
-        ], depends=['company', 'source'], states=PRODUCT_STATES
-    ))
-
-    default_account_revenue = fields.Property(fields.Many2One(
-        'account.account', 'Account Revenue', domain=[
-            ('kind', '=', 'revenue'),
-            ('company', '=', Eval('company')),
-        ], depends=['company', 'source'], states=PRODUCT_STATES,
-    ))
-
     exceptions = fields.One2Many(
         'channel.exception', 'channel', 'Exceptions'
     )

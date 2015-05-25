@@ -1,0 +1,2 @@
+* Default account revenue and expense fields has been removed from sale
+  channel. One should ask for these while importing products.
