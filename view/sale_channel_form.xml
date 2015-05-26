@@ -44,6 +44,8 @@
                 <page string="Taxes" id="taxes">
                 </page>
                 <page string="Advanced" id="advanced">
+                </page>
+                <page string="Import/Export" id="import_export">
                 </page>                
             </notebook>
         </page>
@@ -56,6 +58,6 @@
         </page>
     </notebook>
     <group id="channel_common_buttons" col="3" colspan="4">
-        <button string="Import Orders" name="import_orders_button"/>
+        <button string="Import Data" name="import_data_button"/>
     </group>
 </form>

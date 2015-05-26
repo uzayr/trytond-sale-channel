@@ -9,7 +9,9 @@ from trytond.pool import Pool
 from channel import (
     SaleChannel, ReadUser, WriteUser, ChannelException
 )
-from wizard import OrderImportWizard, OrderImportWizardStart
+from wizard import (
+    ImportDataWizard, ImportDataWizardStart, ImportDataWizardSuccess
+)
 from product import ProductSaleChannelListing, Product
 from sale import Sale
 from user import User
@@ -25,10 +27,11 @@ def register():
         Sale,
         ProductSaleChannelListing,
         Product,
-        OrderImportWizardStart,
+        ImportDataWizardStart,
+        ImportDataWizardSuccess,
         module='sale_channel', type_='model'
     )
     Pool.register(
-        OrderImportWizard,
+        ImportDataWizard,
         module='sale_channel', type_='wizard'
     )

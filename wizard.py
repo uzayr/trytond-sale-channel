@@ -9,35 +9,56 @@ from trytond.pool import Pool
 from trytond.transaction import Transaction
 from trytond.model import ModelView, fields
 from trytond.wizard import (
-    Wizard, StateView, Button, StateTransition, StateAction
+    Wizard, StateView, Button, StateTransition
 )
 
 __all__ = [
-    'OrderImportWizard', 'OrderImportWizardStart'
+    'ImportDataWizard', 'ImportDataWizardStart', 'ImportDataWizardSuccess'
 ]
 
 
-class OrderImportWizardStart(ModelView):
+class ImportDataWizardStart(ModelView):
     "Import Sale Order Start View"
-    __name__ = 'sale.channel.orders_import.start'
+    __name__ = 'sale.channel.import_data.start'
 
     message = fields.Text("Message", readonly=True)
 
+    import_orders = fields.Boolean("Import Orders")
+    import_products = fields.Boolean("Import Products")
 
-class OrderImportWizard(Wizard):
-    "Wizard to import sale order from channel"
-    __name__ = 'sale.channel.orders_import'
+
+class ImportDataWizardSuccess(ModelView):
+    "Import Sale Order Success View"
+    __name__ = 'sale.channel.import_data.success'
+
+    no_of_orders = fields.Integer("Number Of Orders Imported", readonly=True)
+    no_of_products = fields.Integer(
+        "Number Of Products Imported", readonly=True
+    )
+
+
+class ImportDataWizard(Wizard):
+    "Wizard to import data from channel"
+    __name__ = 'sale.channel.import_data'
 
     start = StateView(
-        'sale.channel.orders_import.start',
-        'sale_channel.import_order_start_view_form',
+        'sale.channel.import_data.start',
+        'sale_channel.import_data_start_view_form',
         [
             Button('Cancel', 'end', 'tryton-cancel'),
             Button('Continue', 'next', 'tryton-go-next'),
         ]
     )
     next = StateTransition()
-    import_ = StateAction('sale_channel.act_sale_form_all')
+    import_ = StateTransition()
+
+    success = StateView(
+        'sale.channel.import_data.success',
+        'sale_channel.import_data_success_view_form',
+        [
+            Button('Ok', 'end', 'tryton-ok'),
+        ]
+    )
 
     def default_start(self, data):
         """
@@ -50,28 +71,43 @@ class OrderImportWizard(Wizard):
         channel = Channel(Transaction().context.get('active_id'))
         return {
             'message':
-                "This wizard will import all sale orders placed on "
-                "%s channel(%s) on after the Last Order Import "
+                "This wizard will import all orders and products placed on "
+                "%s channel(%s). Orders will be imported only which are "
+                "placed after the Last Order Import "
                 "Time. If Last Order Import Time is missing, then it will "
-                "import all the orders from beginning of time. [This might "
-                "be slow depending on number of orders]." % (
-                    channel.name, channel.source
-                )
+                "import all the orders from beginning of time. "
+                "[This might be slow depending on number of orders]. "
+                "Checking checkboxes below you may choose to import products "
+                "or orders or both. "
+                % (channel.name, channel.source)
         }
 
     def transition_next(self):
+        return 'import_'
+
+    def transition_import_(self):  # pragma: nocover
         """
         Downstream channel implementation can customize the wizard
-        """
-        return "import_"
-
-    def do_import_(self, action):
-        """
-        Import Orders from channel
         """
         Channel = Pool().get('sale.channel')
 
         channel = Channel(Transaction().context.get('active_id'))
-        sales = channel.import_orders()
-        data = {'res_id': [sale.id for sale in sales]}
-        return action, data
+
+        sales = []
+        products = []
+
+        if self.start.import_orders:
+            sales = channel.import_orders()
+
+        if self.start.import_products:
+            products = channel.import_products()
+
+        self.success.no_of_orders = len(sales)
+        self.success.no_of_products = len(products)
+        return 'success'
+
+    def default_success(self, data):  # pragma: nocover
+        return {
+            'no_of_orders': self.success.no_of_orders,
+            'no_of_products': self.success.no_of_products,
+        }

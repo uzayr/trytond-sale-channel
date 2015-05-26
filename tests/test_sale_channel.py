@@ -47,8 +47,8 @@ class BaseTestCase(unittest.TestCase):
         self.Payment_Term = POOL.get('account.invoice.payment_term')
         self.Sequence = POOL.get('ir.sequence')
         self.Group = POOL.get('res.group')
-        self.OrderImportWizard = POOL.get(
-            'sale.channel.orders_import', type='wizard'
+        self.ImportDataWizard = POOL.get(
+            'sale.channel.import_data', type='wizard'
         )
 
     def _create_coa_minimal(self, company):
@@ -503,15 +503,19 @@ class TestSaleChannel(BaseTestCase):
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             self.setup_defaults()
             with Transaction().set_context(
-                    active_id=self.channel1, company=self.company.id
+                active_id=self.channel1, company=self.company.id
             ):
                 session_id, start_state, end_state = \
-                    self.OrderImportWizard.create()
-                self.OrderImportWizard.execute(session_id, {}, start_state)
+                    self.ImportDataWizard.create()
+                self.ImportDataWizard.execute(session_id, {}, start_state)
+                import_data = self.ImportDataWizard(session_id)
+                import_data.start.import_orders = True
+                import_data.start.import_products = True
+
                 with self.assertRaises(UserError):
                     # UserError is thrown in this case.
                     # Importing orders feature is not available in this module
-                    self.OrderImportWizard.execute(session_id, {}, 'import_')
+                    import_data.transition_import_()
 
 
 def suite():
