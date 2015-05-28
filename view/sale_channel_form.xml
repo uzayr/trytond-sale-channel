@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-
 <form string="Sale Channel" col="6">
     <label name="name"/>
     <field name="name"/>
@@ -46,6 +45,9 @@
                 <page string="Advanced" id="advanced">
                 </page>
                 <page string="Import/Export" id="import_export">
+		    <group id="channel_common_buttons" col="3" colspan="4">
+			<button string="Import Data" name="import_data_button"/>
+		    </group>
                 </page>                
             </notebook>
         </page>
@@ -57,7 +59,4 @@
             <field name="exceptions"/>
         </page>
     </notebook>
-    <group id="channel_common_buttons" col="3" colspan="4">
-        <button string="Import Data" name="import_data_button"/>
-    </group>
 </form>
