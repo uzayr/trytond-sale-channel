@@ -510,7 +510,38 @@ class TestSaleChannel(BaseTestCase):
                 self.ImportDataWizard.execute(session_id, {}, start_state)
                 import_data = self.ImportDataWizard(session_id)
                 import_data.start.import_orders = True
+                import_data.start.import_products = False
+
+                # 1. Moves to import_ directly as product is not being
+                # imported
+                self.assertEqual(import_data.transition_next(), 'import_')
+
                 import_data.start.import_products = True
+
+                # 2. Product is being imported but properties are not set
+                # So it will ask for properties first
+                self.assertFalse(import_data.get_default_property('revenue'))
+                self.assertFalse(import_data.get_default_property('expense'))
+
+                self.assertEqual(import_data.transition_next(), 'properties')
+
+                import_data.properties.account_revenue = \
+                    self.get_account_by_kind('revenue')
+                import_data.properties.account_expense = \
+                    self.get_account_by_kind('expense')
+                import_data.properties.company = self.company.id
+
+                self.assertEqual(
+                    import_data.transition_create_properties(), 'import_'
+                )
+
+                # Properties are created
+                self.assertTrue(import_data.get_default_property('revenue'))
+                self.assertTrue(import_data.get_default_property('expense'))
+
+                # Since properties are set, it wont ask for properties
+                # again
+                self.assertEqual(import_data.transition_next(), 'import_')
 
                 with self.assertRaises(UserError):
                     # UserError is thrown in this case.

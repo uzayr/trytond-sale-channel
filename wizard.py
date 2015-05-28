@@ -11,9 +11,11 @@ from trytond.model import ModelView, fields
 from trytond.wizard import (
     Wizard, StateView, Button, StateTransition
 )
+from trytond.pyson import Eval
 
 __all__ = [
-    'ImportDataWizard', 'ImportDataWizardStart', 'ImportDataWizardSuccess'
+    'ImportDataWizard', 'ImportDataWizardStart', 'ImportDataWizardSuccess',
+    'ImportDataWizardProperties'
 ]
 
 
@@ -25,6 +27,7 @@ class ImportDataWizardStart(ModelView):
 
     import_orders = fields.Boolean("Import Orders")
     import_products = fields.Boolean("Import Products")
+    channel = fields.Many2One("sale.channel", "Channel", select=True)
 
 
 class ImportDataWizardSuccess(ModelView):
@@ -35,6 +38,26 @@ class ImportDataWizardSuccess(ModelView):
     no_of_products = fields.Integer(
         "Number Of Products Imported", readonly=True
     )
+
+
+class ImportDataWizardProperties(ModelView):
+    "Import Sale Order Configure View"
+    __name__ = 'sale.channel.import_data.properties'
+
+    account_expense = fields.Many2One(
+        'account.account', 'Account Expense', domain=[
+            ('kind', '=', 'expense'),
+            ('company', '=', Eval('company')),
+        ], depends=['company']
+    )
+
+    account_revenue = fields.Many2One(
+        'account.account', 'Account Revenue', domain=[
+            ('kind', '=', 'revenue'),
+            ('company', '=', Eval('company')),
+        ], depends=['company']
+    )
+    company = fields.Many2One('company.company', 'Company')
 
 
 class ImportDataWizard(Wizard):
@@ -50,6 +73,14 @@ class ImportDataWizard(Wizard):
         ]
     )
     next = StateTransition()
+    properties = StateView(
+        'sale.channel.import_data.properties',
+        'sale_channel.import_data_properties_view_form',
+        [
+            Button('Continue', 'create_properties', 'tryton-go-next'),
+        ]
+    )
+    create_properties = StateTransition()
     import_ = StateTransition()
 
     success = StateView(
@@ -79,10 +110,86 @@ class ImportDataWizard(Wizard):
                 "[This might be slow depending on number of orders]. "
                 "Checking checkboxes below you may choose to import products "
                 "or orders or both. "
-                % (channel.name, channel.source)
+                % (channel.name, channel.source),
         }
 
+    def default_properties(self, fields):
+        return {
+            'company': self.channel.company.id,
+        }
+
+    def get_model_field(self, kind):
+        """
+        Returns active record for account field
+        """
+        ModelField = Pool().get('ir.model.field')
+
+        model_field, = ModelField.search([
+            ('model.model', '=', 'product.template'),
+            ('name', '=', 'account_%s' % kind),
+        ], limit=1)
+
+        return model_field
+
+    def get_default_property(self, kind):
+        """
+        Returns default properties for product template
+
+        :param kind: revenue or expense
+        """
+        Property = Pool().get('ir.property')
+
+        company = self.start.channel.company
+
+        model_field = self.get_model_field(kind)
+        account_properties = Property.search([
+            ('field', '=', model_field.id),
+            ('res', '=', None),
+            ('company', '=', company.id),
+        ], limit=1)
+
+        return account_properties
+
     def transition_next(self):
+        """
+        Move to properties view if default property is not set for product
+        template while importing products, else continue to import products
+        """
+        Channel = Pool().get('sale.channel')
+
+        channel = Channel(Transaction().context.get('active_id'))
+
+        self.start.channel = channel
+
+        if self.start.import_products and not (
+            self.get_default_property('revenue') and
+            self.get_default_property('expense')
+        ):
+            return 'properties'
+
+        return 'import_'
+
+    def transition_create_properties(self):
+        """
+        Create default properties for product template
+        """
+        Property = Pool().get('ir.property')
+
+        if not self.get_default_property('revenue') and \
+                self.properties.account_revenue:
+            Property.create([{
+                'field': self.get_model_field('revenue').id,
+                'value': str(self.properties.account_revenue),
+                'company': self.start.channel.company.id,
+            }])
+
+        if not self.get_default_property('expense') and \
+                self.properties.account_expense:
+            Property.create([{
+                'field': self.get_model_field('expense').id,
+                'value': str(self.properties.account_expense),
+                'company': self.start.channel.company.id,
+            }])
         return 'import_'
 
     def transition_import_(self):  # pragma: nocover

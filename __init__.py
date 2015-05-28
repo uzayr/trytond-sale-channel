@@ -10,7 +10,8 @@ from channel import (
     SaleChannel, ReadUser, WriteUser, ChannelException
 )
 from wizard import (
-    ImportDataWizard, ImportDataWizardStart, ImportDataWizardSuccess
+    ImportDataWizard, ImportDataWizardStart, ImportDataWizardSuccess,
+    ImportDataWizardProperties
 )
 from product import ProductSaleChannelListing, Product
 from sale import Sale
@@ -29,6 +30,7 @@ def register():
         Product,
         ImportDataWizardStart,
         ImportDataWizardSuccess,
+        ImportDataWizardProperties,
         module='sale_channel', type_='model'
     )
     Pool.register(
