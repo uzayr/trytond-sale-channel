@@ -29,6 +29,13 @@ class ImportDataWizardStart(ModelView):
     import_products = fields.Boolean("Import Products")
     channel = fields.Many2One("sale.channel", "Channel", select=True)
 
+    @staticmethod
+    def default_channel():
+        """
+        Sets current channel as default
+        """
+        return Transaction().context.get('active_id')
+
 
 class ImportDataWizardSuccess(ModelView):
     "Import Sale Order Success View"
