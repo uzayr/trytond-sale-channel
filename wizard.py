@@ -122,7 +122,7 @@ class ImportDataWizard(Wizard):
 
     def default_properties(self, fields):
         return {
-            'company': self.channel.company.id,
+            'company': self.start.channel.company.id,
         }
 
     def get_model_field(self, kind):
