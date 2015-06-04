@@ -86,6 +86,18 @@
             <field name="act_window" ref="act_sale_form_all"/>
         </record>
 
+        <!--Order states-->
+        <record model="ir.ui.view" id="order_states_view_form">
+            <field name="model">sale.channel.order_state</field>
+            <field name="type">form</field>
+            <field name="name">order_states_form</field>
+        </record>
+        <record model="ir.ui.view" id="order_states_view_tree">
+          <field name="model">sale.channel.order_state</field>
+            <field name="type">tree</field>
+            <field name="name">order_states_tree</field>
+        </record>
+
         <!--Cron To Import Orders-->
         <record model="ir.cron" id="cron_import_orders">
             <field name="name">Import Orders</field>

@@ -7,11 +7,12 @@
 """
 from trytond.pool import Pool
 from channel import (
-    SaleChannel, ReadUser, WriteUser, ChannelException
+    SaleChannel, ReadUser, WriteUser, ChannelException, ChannelOrderState
 )
 from wizard import (
     ImportDataWizard, ImportDataWizardStart, ImportDataWizardSuccess,
-    ImportDataWizardProperties
+    ImportDataWizardProperties, ImportOrderStatesStart, ImportOrderStates,
+    ExportPricesStatus, ExportPricesStart, ExportPrices
 )
 from product import ProductSaleChannelListing, Product
 from sale import Sale
@@ -24,6 +25,7 @@ def register():
         ReadUser,
         WriteUser,
         ChannelException,
+        ChannelOrderState,
         User,
         Sale,
         ProductSaleChannelListing,
@@ -31,9 +33,14 @@ def register():
         ImportDataWizardStart,
         ImportDataWizardSuccess,
         ImportDataWizardProperties,
+        ImportOrderStatesStart,
+        ExportPricesStatus,
+        ExportPricesStart,
         module='sale_channel', type_='model'
     )
     Pool.register(
         ImportDataWizard,
+        ImportOrderStates,
+        ExportPrices,
         module='sale_channel', type_='wizard'
     )

@@ -45,9 +45,10 @@
                 <page string="Advanced" id="advanced">
                 </page>
                 <page string="Import/Export" id="import_export">
-		    <group id="channel_common_buttons" col="3" colspan="4">
-			<button string="Import Data" name="import_data_button"/>
-		    </group>
+                    <group id="channel_common_buttons" col="3" colspan="4">
+                        <button string="Import Data" name="import_data_button"/>
+                        <button string="Import Order States" name="import_order_states_button"/>
+                    </group>
                 </page>                
             </notebook>
         </page>
@@ -57,6 +58,9 @@
         </page>
         <page string="Exceptions" id="exceptions">
             <field name="exceptions"/>
+        </page>
+        <page string="Order States" id="order_states">
+            <field name="order_states"/>
         </page>
     </notebook>
 </form>

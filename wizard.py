@@ -15,7 +15,8 @@ from trytond.pyson import Eval
 
 __all__ = [
     'ImportDataWizard', 'ImportDataWizardStart', 'ImportDataWizardSuccess',
-    'ImportDataWizardProperties'
+    'ImportDataWizardProperties', 'ImportOrderStatesStart', 'ImportOrderStates',
+    'ExportPricesStatus', 'ExportPricesStart', 'ExportPrices'
 ]
 
 
@@ -224,4 +225,97 @@ class ImportDataWizard(Wizard):
         return {
             'no_of_orders': self.success.no_of_orders,
             'no_of_products': self.success.no_of_products,
+        }
+
+
+class ImportOrderStatesStart(ModelView):
+    "Import Order States Start"
+    __name__ = 'sale.channel.import_order_states.start'
+
+
+class ImportOrderStates(Wizard):
+    """
+    Wizard to import order states for channel
+    """
+    __name__ = 'sale.channel.import_order_states'
+
+    start = StateView(
+        'sale.channel.import_order_states.start',
+        'sale_channel.wizard_import_order_states_start_view_form',
+        [
+            Button('Ok', 'end', 'tryton-ok'),
+        ]
+    )
+
+    def default_start(self, fields):
+        Channel = Pool().get('sale.channel')
+
+        channel = Channel(Transaction().context.get('active_id'))
+
+        channel.import_order_states()
+
+        return {}
+
+
+class ExportPricesStart(ModelView):
+    "Export Prices Start View"
+    __name__ = 'sale.channel.export_prices.start'
+
+    message = fields.Text("Messgae", readonly=True)
+
+
+class ExportPricesStatus(ModelView):
+    "Export Prices Status View"
+    __name__ = 'sale.channel.export_prices.status'
+
+    products_count = fields.Integer('Products Count', readonly=True)
+
+
+class ExportPrices(Wizard):
+    """
+    Export Tier Prices Wizard
+    """
+    __name__ = 'sale.channel.export_prices'
+
+    start = StateView(
+        'sale.channel.export_prices.start',
+        'sale_channel.export_prices_start_view_form',
+        [
+            Button('Cancel', 'end', 'tryton-cancel'),
+            Button('Continue', 'export_', 'tryton-ok', default=True),
+        ]
+    )
+
+    export_ = StateView(
+        'sale.channel.export_prices.status',
+        'sale_channel.export_prices_status_view_form',
+        [
+            Button('OK', 'end', 'tryton-ok'),
+        ]
+    )
+
+    def default_start(self, fields):
+        """
+        Return message to display
+        """
+        Channel = Pool().get('sale.channel')
+
+        channel = Channel(Transaction().context.get('active_id'))
+
+        return {
+            'message':
+                "This wizard will export product prices to %s "
+                "channel (%s). " % (channel.name, channel.source)
+        }
+
+    def default_export_(self, fields):
+        """
+        Export prices and return count of products
+        """
+        Channel = Pool().get('sale.channel')
+
+        channel = Channel(Transaction().context.get('active_id'))
+
+        return {
+            'products_count': channel.export_product_prices()
         }

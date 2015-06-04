@@ -15,6 +15,7 @@ from trytond.model import ModelView, fields, ModelSQL
 __metaclass__ = PoolMeta
 __all__ = [
     'SaleChannel', 'ReadUser', 'WriteUser', 'ChannelException',
+    'ChannelOrderState'
 ]
 
 STATES = {
@@ -105,6 +106,10 @@ class SaleChannel(ModelSQL, ModelView):
         'channel.exception', 'channel', 'Exceptions'
     )
 
+    order_states = fields.One2Many(
+        "sale.channel.order_state", "channel", "Order States"
+    )
+
     @classmethod
     def __setup__(cls):
         """
@@ -113,6 +118,7 @@ class SaleChannel(ModelSQL, ModelView):
         super(SaleChannel, cls).__setup__()
         cls._buttons.update({
             'import_data_button': {},
+            'import_order_states_button': {},
         })
 
     @staticmethod
@@ -155,6 +161,21 @@ class SaleChannel(ModelSQL, ModelView):
         if not company:
             company = Company(SaleChannel.default_company())  # pragma: nocover
         return company and company.party.id or None
+
+    def export_product_prices(self):
+        """
+        Export product prices to channel
+
+        Since external channels are implemented by downstream modules, it is
+        the responsibility of those channels to reuse this method or call super.
+
+        :return: List of active records of products for which prices are
+        exported
+        """
+        raise self.raise_user_error(
+            "This feature has not been implemented for %s channel yet."
+            % self.source
+        )
 
     @classmethod
     def import_orders_using_cron(cls, channels):  # pragma: nocover
@@ -241,6 +262,74 @@ class SaleChannel(ModelSQL, ModelView):
     def import_data_button(cls, channels):
         pass  # pragma: nocover
 
+    @classmethod
+    @ModelView.button_action('sale_channel.wizard_import_order_states')
+    def import_order_states_button(cls, channels):
+        """
+        Import order states for current channel
+
+        :param channels: List of active records of channels
+        """
+        pass
+
+    def import_order_states(self):
+        """
+        Imports order states for current channel
+
+        Since external channels are implemented by downstream modules, it is
+        the responsibility of those channels to implement importing or call
+        super to delegate.
+        """
+        raise self.raise_user_error(
+            "This feature has not been implemented for %s channel yet"
+            % self.source
+        )
+
+    def get_tryton_action(self, name):
+        """
+        Get the tryton action corresponding to the channel state
+        as per the predefined logic.
+
+        Downstream modules need to inherit method and map states as per
+        convenience.
+
+        :param name: Name of channel state
+        :returns: A dictionary of tryton action and shipment and invoice methods
+        """
+        return {
+            'action': 'do_not_import',
+            'invoice_method': 'manual',
+            'shipment_method': 'manual'
+        }
+
+    def create_order_state(self, code, name):
+        """
+        This method creates order state for channel with given state code and
+        state name. If state already exist, return same.
+
+        :param code: State code used by external channel
+        :param name: State name used by external channel
+        :return: Active record of order state created or found
+        """
+        OrderState = Pool().get('sale.channel.order_state')
+
+        order_states = OrderState.search([
+            ('code', '=', code),
+            ('channel', '=', self.id)
+        ])
+
+        if order_states:
+            return order_states[0]
+
+        values = self.get_tryton_action(code)
+        values.update({
+            'name': name,
+            'code': code,
+            'channel': self.id,
+        })
+
+        return OrderState.create([values])[0]
+
 
 class ReadUser(ModelSQL):
     """
@@ -300,3 +389,45 @@ class ChannelException(ModelSQL, ModelView):
             ('sale.sale', 'Sale'),
             ('sale.line', 'Sale Line'),
         ]
+
+
+class ChannelOrderState(ModelSQL, ModelView):
+    """
+    Sale Channel - Tryton Order State map
+
+    This model stores a map of order states between tryton and sale channel.
+    This allows the user to configure the states mapping according to his/her
+    convenience. This map is used to process orders in tryton when they are
+    imported. This is also used to map the order status back to channel when
+    sales are exported. This also allows the user to determine in which state
+    order need to be imported.
+    """
+    __name__ = 'sale.channel.order_state'
+
+    name = fields.Char('Name', required=True, readonly=True)
+    code = fields.Char('Code', required=True, readonly=True)
+    action = fields.Selection([
+        ('do_not_import', 'Do Not Import'),
+        ('process_automatically', 'Process Automatically'),
+        ('process_manually', 'Process Manually'),
+        ('import_as_past', 'Import As Past Orders'),
+    ], 'Action', required=True)
+    invoice_method = fields.Selection([
+        ('manual', 'Manual'),
+        ('order', 'On Order Processed'),
+        ('shipment', 'On Shipment Sent'),
+    ], 'Invoice Method', required=True)
+    shipment_method = fields.Selection([
+        ('manual', 'Manual'),
+        ('order', 'On Order Processed'),
+        ('invoice', 'On Invoice Paid'),
+    ], 'Shipment Method', required=True)
+    channel = fields.Many2One(
+        'sale.channel', 'Sale Channel', required=True,
+        ondelete="CASCADE", readonly=True
+    )
+
+    @staticmethod
+    def default_channel():
+        "Return default channel from context"
+        return Transaction().context.get('current_channel')
