@@ -119,6 +119,7 @@ class ImportDataWizard(Wizard):
                 "Checking checkboxes below you may choose to import products "
                 "or orders or both. "
                 % (channel.name, channel.source),
+            'channel': channel.id
         }
 
     def default_properties(self, fields):
@@ -169,7 +170,7 @@ class ImportDataWizard(Wizard):
 
         self.start.channel = channel
 
-        if self.start.import_products and not (
+        if not (
             self.get_default_property('revenue') and
             self.get_default_property('expense')
         ):

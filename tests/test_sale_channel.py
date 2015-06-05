@@ -510,16 +510,11 @@ class TestSaleChannel(BaseTestCase):
                 self.ImportDataWizard.execute(session_id, {}, start_state)
                 import_data = self.ImportDataWizard(session_id)
                 import_data.start.import_orders = True
-                import_data.start.import_products = False
-
-                # 1. Moves to import_ directly as product is not being
-                # imported
-                self.assertEqual(import_data.transition_next(), 'import_')
-
                 import_data.start.import_products = True
+                import_data.start.channel = self.channel1
 
-                # 2. Product is being imported but properties are not set
-                # So it will ask for properties first
+                # 1. Product / Order is being imported but properties are not
+                # set So it will ask for properties first
                 self.assertFalse(import_data.get_default_property('revenue'))
                 self.assertFalse(import_data.get_default_property('expense'))
 
