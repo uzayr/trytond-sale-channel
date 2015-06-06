@@ -28,6 +28,10 @@ PRODUCT_STATES = {
     'required': Eval('source') != 'manual',
 }
 
+INVISIBLE_IF_MANUAL = {
+    'invisible': Eval('source') == 'manual',
+}
+
 
 class SaleChannel(ModelSQL, ModelView):
     """
@@ -110,6 +114,28 @@ class SaleChannel(ModelSQL, ModelView):
         "sale.channel.order_state", "channel", "Order States"
     )
 
+    last_order_import_time = fields.DateTime(
+        'Last Order Import Time', states=INVISIBLE_IF_MANUAL,
+        depends=['source']
+    )
+    last_order_export_time = fields.DateTime(
+        "Last Order Export Time", states=INVISIBLE_IF_MANUAL,
+        depends=['source']
+    )
+
+    last_shipment_export_time = fields.DateTime(
+        'Last shipment export time', states=INVISIBLE_IF_MANUAL,
+        depends=['source']
+    )
+    last_product_price_export_time = fields.DateTime(
+        'Last Product Price Export Time', states=INVISIBLE_IF_MANUAL,
+        depends=['source']
+    )
+    last_product_export_time = fields.DateTime(
+        'Last Product Export Time', states=INVISIBLE_IF_MANUAL,
+        depends=['source']
+    )
+
     @classmethod
     def __setup__(cls):
         """
@@ -189,6 +215,22 @@ class SaleChannel(ModelSQL, ModelView):
         for channel in channels:
             try:
                 channel.import_orders()
+            except UserError:
+                # Silently pass if method is not implemented
+                pass
+
+    @classmethod
+    def export_product_prices_using_cron(cls, channels):  # pragma: nocover
+        """
+        Cron method to export product prices to external channel using cron
+
+        Downstream module need not to implement this method.
+        It will automatically call export_product_prices method of the channel.
+        Silently pass if export_product_prices is not implemented
+        """
+        for channel in channels:
+            try:
+                channel.export_product_prices()
             except UserError:
                 # Silently pass if method is not implemented
                 pass

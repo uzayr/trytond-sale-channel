@@ -23,7 +23,17 @@
                 </page>
                 <page string="Advanced" id="advanced">
                 </page>
-                <page string="Import/Export" id="import_export">
+                <page string="Last Import / Export Time" id="last_import_export_time" states="{'invisible': Eval('source') == 'manual' }">
+                    <label name="last_order_import_time"/>
+                    <field name="last_order_import_time"/>
+                    <label name="last_order_export_time"/>
+                    <field name="last_order_export_time"/>
+                    <label name="last_shipment_export_time"/>
+                    <field name="last_shipment_export_time"/>
+                    <label name="last_product_price_export_time"/>
+                    <field name="last_product_price_export_time"/>
+                    <label name="last_product_export_time"/>
+                    <field name="last_product_export_time"/>
                     <group id="channel_common_buttons" col="3" colspan="4">
                         <button string="Import Data" name="import_data_button"/>
                         <button string="Import Order States" name="import_order_states_button"/>

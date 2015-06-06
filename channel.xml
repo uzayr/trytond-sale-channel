@@ -111,5 +111,18 @@
             <field name="model">sale.channel</field>
             <field name="function">import_orders_using_cron</field>
         </record>
+
+        <!-- Cron To Export Product Prices-->
+        <record model="ir.cron" id="ir_cron_export_product_prices">
+            <field name="name">Export Product Prices</field>
+            <field name="request_user" ref="res.user_admin"/>
+            <field name="user" ref="res.user_trigger"/>
+            <field name="active" eval="True"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="number_calls">-1</field>
+            <field name="model">sale.channel</field>
+            <field name="function">export_product_prices_using_cron</field>
+        </record>
     </data>
 </tryton>
