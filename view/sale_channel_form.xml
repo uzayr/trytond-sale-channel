@@ -34,10 +34,6 @@
                     <field name="last_product_price_export_time"/>
                     <label name="last_product_export_time"/>
                     <field name="last_product_export_time"/>
-                    <group id="channel_common_buttons" col="3" colspan="4">
-                        <button string="Import Data" name="import_data_button"/>
-                        <button string="Import Order States" name="import_order_states_button"/>
-                    </group>
                 </page>                
             </notebook>
         </page>
@@ -70,7 +66,11 @@
             <field name="exceptions"/>
         </page>
         <page string="Order States" id="order_states">
-            <field name="order_states"/>
+            <button string="Import Order States" name="import_order_states_button"/>
+            <field name="order_states" colspan="6"/>
         </page>
     </notebook>
+    <group id="import_export_buttons" colspan="8" states="{'invisible': Eval('source') == 'manual' }">
+        <button string="Import Data" name="import_data_button"/>
+    </group>
 </form>
