@@ -8,7 +8,7 @@
 from trytond.pool import PoolMeta, Pool
 from trytond.transaction import Transaction
 from trytond.exceptions import UserError
-from trytond.pyson import Eval
+from trytond.pyson import Eval, Bool
 from trytond.model import ModelView, fields, ModelSQL
 
 
@@ -115,8 +115,11 @@ class SaleChannel(ModelSQL, ModelView):
     )
 
     last_order_import_time = fields.DateTime(
-        'Last Order Import Time', states=INVISIBLE_IF_MANUAL,
-        depends=['source']
+        'Last Order Import Time',
+        depends=['source', 'last_order_import_time_required'], states={
+            'invisible': Eval('source') == 'manual',
+            'required': Bool(Eval('last_order_import_time_required'))
+        }
     )
     last_order_export_time = fields.DateTime(
         "Last Order Export Time", states=INVISIBLE_IF_MANUAL,
@@ -135,6 +138,18 @@ class SaleChannel(ModelSQL, ModelView):
         'Last Product Export Time', states=INVISIBLE_IF_MANUAL,
         depends=['source']
     )
+
+    last_order_import_time_required = fields.Function(
+        fields.DateTime('Last Order Import Time Required'),
+        'get_last_order_import_time_required'
+    )
+
+    def get_last_order_import_time_required(self, name):
+        """
+        Returns True or False if last_order_import_time field should be required
+        or not
+        """
+        return False
 
     @classmethod
     def __setup__(cls):
