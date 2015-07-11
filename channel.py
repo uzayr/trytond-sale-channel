@@ -188,8 +188,7 @@ class SaleChannel(ModelSQL, ModelView):
         Channel = pool.get('sale.channel')
 
         company_id = Channel.default_company()
-        company = Company(company_id)
-        return company.currency.id
+        return company_id and Company(company_id).currency.id
 
     @staticmethod
     def default_company():
