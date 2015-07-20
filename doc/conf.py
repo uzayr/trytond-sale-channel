@@ -49,8 +49,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Tryton Sale Channel'
-copyright = u'2015, Openlabs'
-author = u'Openlabs'
+copyright = u'2015, Fulfil.IO Inc, 2015, Openlabs'
+author = u'Fulfil.IO'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
