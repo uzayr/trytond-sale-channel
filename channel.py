@@ -2,8 +2,6 @@
 """
     sale_channel.py
 
-    :copyright: (c) 2015 by Openlabs Technologies & Consulting (P) Limited
-    :license: BSD, see LICENSE for more details.
 """
 from trytond.pool import PoolMeta, Pool
 from trytond.transaction import Transaction
@@ -188,8 +186,7 @@ class SaleChannel(ModelSQL, ModelView):
         Channel = pool.get('sale.channel')
 
         company_id = Channel.default_company()
-        company = Company(company_id)
-        return company.currency.id
+        return company_id and Company(company_id).currency.id
 
     @staticmethod
     def default_company():

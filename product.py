@@ -2,8 +2,6 @@
 """
     product.py
 
-    :copyright: (c) 2015 by Openlabs Technologies & Consulting (P) Limited
-    :license: see LICENSE for more details.
 """
 from trytond.pool import PoolMeta
 from trytond.model import ModelView, fields, ModelSQL
