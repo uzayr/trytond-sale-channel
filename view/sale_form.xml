@@ -6,4 +6,9 @@
         <label name="channel"/>
         <field name="channel" widget="selection"/>
     </xpath>
+    <xpath expr="//notebook" position="inside">
+        <page name="exceptions">
+            <field name="exceptions"/>
+        </page>
+    </xpath>
 </data>
