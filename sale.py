@@ -35,10 +35,27 @@ class Sale:
         fields.Boolean('Has Channel Exception ?'), 'get_has_channel_exception'
     )
 
+    exceptions = fields.Function(
+        fields.One2Many("channel.exception", None, "Exceptions"),
+        'get_channel_exceptions'
+    )
+
+    def get_channel_exceptions(self, name=None):
+        ChannelException = Pool().get('channel.exception')
+
+        return map(
+            int, ChannelException.search([
+                ('origin', '=', '%s,%s' % (self.__name__, self.id)),
+                ('channel', '=', self.channel.id),
+            ], order=[('is_resolved', 'desc')])
+        )
+
     def get_has_channel_exception(self, name):
         """
         Returs True if sale has exception
         """
+        # TODO: has_channel_exception is not needed now, should be
+        # removed
         ChannelException = Pool().get('channel.exception')
 
         return bool(
