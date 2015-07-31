@@ -494,6 +494,80 @@ class TestSaleChannel(BaseTestCase):
 
             self.assertFalse(sale.has_channel_exception)
 
+    def test_0100_check_channel_exceptions(self):
+        """
+        Check channel exceptions realted to sale
+        """
+        ChannelException = POOL.get('channel.exception')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            sale = self.create_sale(1, self.channel1)
+            sale_line, = self.SaleLine.create([{
+                'type': 'comment',
+                'sale': sale.id,
+                'description': 'Test Line'
+            }])
+
+            self.assertFalse(sale.exceptions)
+
+            channel_exception1, = ChannelException.create([{
+                'origin': '%s,%s' % (sale.__name__, sale.id),
+                'log': 'Sale has exception',
+                'channel': sale.channel.id,
+            }])
+
+            channel_exception2, = ChannelException.create([{
+                'origin': '%s,%s' % (sale.__name__, sale.id),
+                'log': 'Sale has exception',
+                'channel': sale.channel.id,
+                'is_resolved': True
+            }])
+
+            channel_exception3, = ChannelException.create([{
+                'origin': '%s,%s' % (sale.__name__, sale.id),
+                'log': 'Sale has exception',
+                'channel': sale.channel.id,
+            }])
+
+            channel_exception4, = ChannelException.create([{
+                'origin': '%s,%s' % (sale_line.__name__, sale_line.id),
+                'log': 'test exception',
+                'channel': sale.channel.id,
+            }])
+
+            channel_exception5, = ChannelException.create([{
+                'origin': '%s,%s' % (sale.__name__, sale.id),
+                'log': 'Sale has exception',
+                'channel': sale.channel.id,
+                'is_resolved': True
+            }])
+
+            self.assert_(channel_exception1)
+            self.assert_(channel_exception2)
+            self.assert_(channel_exception3)
+            self.assert_(channel_exception4)
+            self.assert_(channel_exception5)
+
+            self.assertTrue(sale.exceptions)
+
+            self.assertEqual(
+                sale.exceptions, (
+                    channel_exception2, channel_exception5, channel_exception1,
+                    channel_exception3
+                )
+            )
+            self.assertEqual(len(sale.exceptions), 4)
+            self.assertTrue(channel_exception1 in sale.exceptions)
+
+            self.assertTrue(channel_exception2 in sale.exceptions)
+            self.assertTrue(channel_exception3 in sale.exceptions)
+            self.assertTrue(channel_exception5 in sale.exceptions)
+
+            # Is not sale exception, since origin is not sale
+            self.assertFalse(channel_exception4 in sale.exceptions)
+
     def test_0100_orders_import_wizard(self):
         """
         Check orders import wizard
