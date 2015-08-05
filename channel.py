@@ -339,7 +339,17 @@ class SaleChannel(ModelSQL, ModelView):
             % self.source
         )
 
-    def get_tryton_action(self, name):
+    def get_default_tryton_action(self, code):
+        """
+        Return default tryton_actions for this channel
+        """
+        return {
+            'action': 'do_not_import',
+            'invoice_method': 'manual',
+            'shipment_method': 'manual',
+        }
+
+    def get_tryton_action(self, code):
         """
         Get the tryton action corresponding to the channel state
         as per the predefined logic.
@@ -347,14 +357,28 @@ class SaleChannel(ModelSQL, ModelView):
         Downstream modules need to inherit method and map states as per
         convenience.
 
-        :param name: Name of channel state
+        :param code: Code of channel state
         :returns: A dictionary of tryton action and shipment and invoice methods
         """
-        return {
-            'action': 'do_not_import',
-            'invoice_method': 'manual',
-            'shipment_method': 'manual'
-        }
+        ChannelOrderState = Pool().get('sale.channel.order_state')
+
+        try:
+            order_state, = ChannelOrderState.search([
+                ('channel', '=', self.id),
+                ('code', '=', code),
+            ])
+        except ValueError:
+            return {
+                'action': 'do_not_import',
+                'invoice_method': 'manual',
+                'shipment_method': 'manual',
+            }
+        else:
+            return {
+                'action': order_state.action,
+                'invoice_method': order_state.invoice_method,
+                'shipment_method': order_state.shipment_method,
+            }
 
     def create_order_state(self, code, name):
         """
@@ -375,7 +399,7 @@ class SaleChannel(ModelSQL, ModelView):
         if order_states:
             return order_states[0]
 
-        values = self.get_tryton_action(code)
+        values = self.get_default_tryton_action(code)
         values.update({
             'name': name,
             'code': code,
