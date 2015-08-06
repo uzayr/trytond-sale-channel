@@ -159,6 +159,11 @@ class SaleChannel(ModelSQL, ModelView):
             'import_data_button': {},
             'import_order_states_button': {},
         })
+        cls._error_messages.update({
+            "no_order_states_to_import":
+                "No importable order state found\n"
+                "HINT: Import order states from Order States tab in Channel"
+        })
 
     @staticmethod
     def default_default_uom():
@@ -199,6 +204,20 @@ class SaleChannel(ModelSQL, ModelView):
         if not company:
             company = Company(SaleChannel.default_company())  # pragma: nocover
         return company and company.party.id or None
+
+    def get_order_states_to_import(self):
+        """
+        Return list of `sale.channel.order_state` to import orders
+        """
+        OrderState = Pool().get('sale.channel.order_state')
+
+        order_states = OrderState.search([
+            ('action', '!=', 'do_not_import'),
+            ('channel', '=', self.id),
+        ])
+        if not order_states:
+            self.raise_user_error("no_order_states_to_import")
+        return order_states
 
     def export_product_prices(self):
         """
