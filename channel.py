@@ -244,11 +244,12 @@ class SaleChannel(ModelSQL, ModelView):
         Silently pass if import_orders is not implemented
         """
         for channel in cls.search([]):
-            try:
-                channel.import_orders()
-            except UserError:
-                # Silently pass if method is not implemented
-                pass
+            with Transaction().set_context(company=channel.company.id):
+                try:
+                    channel.import_orders()
+                except UserError:
+                    # Silently pass if method is not implemented
+                    pass
 
     @classmethod
     def export_product_prices_using_cron(cls):  # pragma: nocover
@@ -260,11 +261,12 @@ class SaleChannel(ModelSQL, ModelView):
         Silently pass if export_product_prices is not implemented
         """
         for channel in cls.search([]):
-            try:
-                channel.export_product_prices()
-            except UserError:
-                # Silently pass if method is not implemented
-                pass
+            with Transaction().set_context(company=channel.company.id):
+                try:
+                    channel.export_product_prices()
+                except UserError:
+                    # Silently pass if method is not implemented
+                    pass
 
     def import_orders(self):
         """
