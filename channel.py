@@ -235,7 +235,7 @@ class SaleChannel(ModelSQL, ModelView):
         )
 
     @classmethod
-    def import_orders_using_cron(cls, channels):  # pragma: nocover
+    def import_orders_using_cron(cls):  # pragma: nocover
         """
         Cron method to import orders from channels using cron
 
@@ -243,7 +243,7 @@ class SaleChannel(ModelSQL, ModelView):
         It will automatically call import_orders of the channel
         Silently pass if import_orders is not implemented
         """
-        for channel in channels:
+        for channel in cls.search([]):
             try:
                 channel.import_orders()
             except UserError:
@@ -251,7 +251,7 @@ class SaleChannel(ModelSQL, ModelView):
                 pass
 
     @classmethod
-    def export_product_prices_using_cron(cls, channels):  # pragma: nocover
+    def export_product_prices_using_cron(cls):  # pragma: nocover
         """
         Cron method to export product prices to external channel using cron
 
@@ -259,7 +259,7 @@ class SaleChannel(ModelSQL, ModelView):
         It will automatically call export_product_prices method of the channel.
         Silently pass if export_product_prices is not implemented
         """
-        for channel in channels:
+        for channel in cls.search([]):
             try:
                 channel.export_product_prices()
             except UserError:
