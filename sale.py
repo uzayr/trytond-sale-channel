@@ -7,6 +7,7 @@ from trytond.model import fields
 from trytond.transaction import Transaction
 from trytond.pool import Pool, PoolMeta
 from trytond.pyson import Eval, Or, Bool
+from psycopg2.extensions import AsIs
 
 __all__ = ['Sale']
 __metaclass__ = PoolMeta
@@ -32,13 +33,40 @@ class Sale:
     )
 
     has_channel_exception = fields.Function(
-        fields.Boolean('Has Channel Exception ?'), 'get_has_channel_exception'
+        fields.Boolean('Has Channel Exception ?'), 'get_has_channel_exception',
+        searcher='search_has_channel_exception'
     )
 
     exceptions = fields.Function(
         fields.One2Many("channel.exception", None, "Exceptions"),
         'get_channel_exceptions'
     )
+
+    @classmethod
+    def search_has_channel_exception(cls, name, clause):
+        """
+        Returns domain for sale with exceptions
+        """
+        ChannelException = Pool().get('channel.exception')
+        Sale = Pool().get('sale.sale')
+
+        cursor = Transaction().cursor
+        sale_with_exceptions = []
+
+        # TODO: Convert this expression to python sql
+        cursor.execute(
+            "SELECT DISTINCT(sale.id) "
+            "FROM %s as exception "
+            "JOIN %s as sale on "
+            "(exception.origin = 'sale.sale,'||sale.id) "
+            "WHERE is_resolved is %s",
+            (AsIs(ChannelException._table), AsIs(Sale._table), False)
+        )
+
+        sale_with_exceptions = map(lambda t: t[0], cursor.fetchall())
+
+        return clause[2] and [('id', 'in', sale_with_exceptions)] or \
+            [('id', 'not in', sale_with_exceptions)]
 
     def get_channel_exceptions(self, name=None):
         ChannelException = Pool().get('channel.exception')
@@ -54,8 +82,6 @@ class Sale:
         """
         Returs True if sale has exception
         """
-        # TODO: has_channel_exception is not needed now, should be
-        # removed
         ChannelException = Pool().get('channel.exception')
 
         return bool(
