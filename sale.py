@@ -37,7 +37,7 @@ class Sale:
 
     exceptions = fields.Function(
         fields.One2Many("channel.exception", None, "Exceptions"),
-        'get_channel_exceptions'
+        'get_channel_exceptions', setter='set_channel_exceptions'
     )
 
     def get_channel_exceptions(self, name=None):
@@ -49,6 +49,10 @@ class Sale:
                 ('channel', '=', self.channel.id),
             ], order=[('is_resolved', 'desc')])
         )
+
+    @classmethod
+    def set_channel_exceptions(cls, exceptions, name, value):
+        pass
 
     def get_has_channel_exception(self, name):
         """

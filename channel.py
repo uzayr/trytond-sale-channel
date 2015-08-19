@@ -503,7 +503,34 @@ class ChannelException(ModelSQL, ModelView):
     channel = fields.Many2One(
         "sale.channel", "Channel", required=True, readonly=True
     )
-    is_resolved = fields.Boolean("Is Resolved ?", select=True)
+    is_resolved = fields.Boolean("Is Resolved ?", select=True, readonly=True)
+
+    @classmethod
+    def __setup__(cls):
+        """
+        Setup the class before adding to pool
+        """
+        super(ChannelException, cls).__setup__()
+
+        cls._buttons.update({
+            'resolve_exception_button': {
+                'readonly': Bool(Eval('is_resolved')),
+            },
+        })
+
+    @classmethod
+    @ModelView.button
+    def resolve_exception_button(cls, exceptions):
+        """
+        Method called from a button to resolve exceptions
+
+        :param channels: List of active records of exceptions
+        """
+        for exception in exceptions:
+            if exception.is_resolved:
+                continue
+            exception.is_resolved = True
+            exception.save()
 
     @staticmethod
     def default_is_resolved():
