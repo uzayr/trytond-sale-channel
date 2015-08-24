@@ -494,6 +494,59 @@ class TestSaleChannel(BaseTestCase):
 
             self.assertFalse(sale.has_channel_exception)
 
+    def test_0095_check_channel_exception_searcher(self):
+        """
+        Check searcher for channel exception
+        """
+        ChannelException = POOL.get('channel.exception')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            sale1 = self.create_sale(1, self.channel1)
+            sale2 = self.create_sale(1, self.channel1)
+            sale3 = self.create_sale(1, self.channel1)
+
+            self.assertFalse(sale1.has_channel_exception)
+            self.assertFalse(sale2.has_channel_exception)
+
+            self.assertEqual(
+                self.Sale.search([
+                    ('has_channel_exception', '=', True)
+                ], count=True), 0
+            )
+
+            self.assertEqual(
+                self.Sale.search([
+                    ('has_channel_exception', '=', False)
+                ], count=True), 3
+            )
+
+            ChannelException.create([{
+                'origin': '%s,%s' % (sale1.__name__, sale1.id),
+                'log': 'Sale has exception',
+                'channel': sale1.channel.id,
+                'is_resolved': False,
+            }])
+
+            ChannelException.create([{
+                'origin': '%s,%s' % (sale2.__name__, sale2.id),
+                'log': 'Sale has exception',
+                'channel': sale2.channel.id,
+                'is_resolved': True,
+            }])
+
+            self.assertEqual(
+                self.Sale.search([('has_channel_exception', '=', True)]),
+                [sale1]
+            )
+
+            # Sale2 has exception but is resolved already
+            self.assertEqual(
+                self.Sale.search([('has_channel_exception', '=', False)]),
+                [sale3, sale2]
+            )
+
     def test_0100_check_channel_exceptions(self):
         """
         Check channel exceptions realted to sale

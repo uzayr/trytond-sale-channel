@@ -7,7 +7,7 @@
     <label name="active"/>
     <field name="active"/>
     <label name="company"/>
-    <field name="company"/>
+    <field name="company" widget="selection"/>
     <label name="address"/>
     <field name="address"/>
     <label name="source"/>
@@ -39,7 +39,7 @@
         </page>
         <page string="Order Defaults" id="order">
             <label name="warehouse"/>
-            <field name="warehouse"/>
+            <field name="warehouse" widget="selection"/>
             <label name="invoice_method"/>
             <field name="invoice_method"/>
             <label name="shipment_method"/>
@@ -47,7 +47,7 @@
             <label name="payment_term"/>
             <field name="payment_term"/>
             <label name="currency"/>
-            <field name="currency"/>
+            <field name="currency" widget="selection"/>
             <label name="price_list"/>
             <field name="price_list"/>
         </page>

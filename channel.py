@@ -268,6 +268,36 @@ class SaleChannel(ModelSQL, ModelView):
                     # Silently pass if method is not implemented
                     pass
 
+    @classmethod
+    def export_product_catalog_using_cron(cls):  # pragma: nocover
+        """
+        Cron method to export product catalog to external channel using cron
+
+        Downstream module need not to implement this method.
+
+        Silently pass if export_product_catalog is not implemented
+        """
+        for channel in cls.search([]):
+            with Transaction().set_context(company=channel.company.id):
+                try:
+                    channel.export_product_catalog()
+                except UserError:
+                    # Silently pass if method is not implemented
+                    pass
+
+    def export_product_catalog(self):
+        """
+        Export product catalog to external channel
+
+        Since external channels are implemented by downstream modules, it is
+        the responsibility of those channels to implement importing or call
+        super to delegate.
+        """
+        raise self.raise_user_error(
+            "Method export_product_catalog is not implemented yet for %s "
+            "channels" % self.source
+        )
+
     def import_orders(self):
         """
         Import orders from external channel.
@@ -473,7 +503,34 @@ class ChannelException(ModelSQL, ModelView):
     channel = fields.Many2One(
         "sale.channel", "Channel", required=True, readonly=True
     )
-    is_resolved = fields.Boolean("Is Resolved ?", select=True)
+    is_resolved = fields.Boolean("Is Resolved ?", select=True, readonly=True)
+
+    @classmethod
+    def __setup__(cls):
+        """
+        Setup the class before adding to pool
+        """
+        super(ChannelException, cls).__setup__()
+
+        cls._buttons.update({
+            'resolve_exception_button': {
+                'readonly': Bool(Eval('is_resolved')),
+            },
+        })
+
+    @classmethod
+    @ModelView.button
+    def resolve_exception_button(cls, exceptions):
+        """
+        Method called from a button to resolve exceptions
+
+        :param channels: List of active records of exceptions
+        """
+        for exception in exceptions:
+            if exception.is_resolved:
+                continue
+            exception.is_resolved = True
+            exception.save()
 
     @staticmethod
     def default_is_resolved():
