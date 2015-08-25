@@ -17,7 +17,7 @@ class Sale:
     __name__ = 'sale.sale'
 
     channel = fields.Many2One(
-        'sale.channel', 'Channel', required=True, domain=[
+        'sale.channel', 'Channel', required=True, select=True, domain=[
             ('id', 'in', Eval('context', {}).get('allowed_read_channels', [])),
         ],
         states={
