@@ -18,6 +18,16 @@ class Product:
         'product.product.channel_listing', 'product', 'Channel Listings',
     )
 
+    @classmethod
+    def create_from(cls, channel, product_data):
+        """
+        Create the product for the channel
+        """
+        raise NotImplementedError(
+            "create_from is not implemented in product for %s channels"
+            % channel.source
+        )
+
 
 class ProductSaleChannelListing(ModelSQL, ModelView):
     '''Product - Sale Channel
@@ -61,3 +71,13 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
     @staticmethod
     def default_state():
         return 'active'
+
+    @classmethod
+    def create_from(cls, channel, product_data):
+        """
+        Create a listing for the product from channel and data
+        """
+        raise NotImplementedError(
+            "create_from is not implemented in channel listing for %s channels"
+            % channel.source
+        )
