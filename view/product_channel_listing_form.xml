@@ -5,6 +5,8 @@
     <field name="channel"/>
     <label name="product_identifier"/>
     <field name="product_identifier"/>
+    <label name="state"/>
+    <field name="state"/>
     <label name="product"/>
     <field name="product"/>
 </form>
