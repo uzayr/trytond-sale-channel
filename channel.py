@@ -205,6 +205,12 @@ class SaleChannel(ModelSQL, ModelView):
             company = Company(SaleChannel.default_company())  # pragma: nocover
         return company and company.party.id or None
 
+    @classmethod
+    def get_current_channel(cls):
+        """Helper method to get the current current_channel.
+        """
+        return cls(Transaction().context['current_channel'])
+
     def get_order_states_to_import(self):
         """
         Return list of `sale.channel.order_state` to import orders
