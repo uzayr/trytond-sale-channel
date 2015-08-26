@@ -39,6 +39,10 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
         ondelete='CASCADE'
     )
     product_identifier = fields.Char("Product Identifier")
+    state = fields.Selection([
+        ('active', 'Active'),
+        ('disabled', 'Disabled'),
+    ], 'State', required=True, select=True)
 
     @classmethod
     def __setup__(cls):
@@ -53,3 +57,7 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
                 'Each product can be linked to only one Sale Channel!'
             )
         ]
+
+    @staticmethod
+    def default_state():
+        return 'active'
