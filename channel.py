@@ -368,6 +368,18 @@ class SaleChannel(ModelSQL, ModelView):
             % self.source
         )  # pragma: nocover
 
+    def get_product(self, identifier):
+        """
+        Given a SKU find the product or if it aint there create it and then
+        return the active record of the product. This cannot be done async
+        under any circumstances, because a product created on another
+        transaction will not be visible to the current transaction unless the
+        transaction is started over.
+
+        :param identifier: product identifier
+        """
+        return self.import_product(identifier)
+
     @classmethod
     @ModelView.button_action('sale_channel.wizard_import_data')
     def import_data_button(cls, channels):
