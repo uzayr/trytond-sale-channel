@@ -5,7 +5,6 @@
 """
 from trytond.pool import PoolMeta, Pool
 from trytond.transaction import Transaction
-from trytond.exceptions import UserError
 from trytond.pyson import Eval, Bool
 from trytond.model import ModelView, fields, ModelSQL
 
@@ -235,7 +234,7 @@ class SaleChannel(ModelSQL, ModelView):
         :return: List of active records of products for which prices are
         exported
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "This feature has not been implemented for %s channel yet."
             % self.source
         )
@@ -253,7 +252,7 @@ class SaleChannel(ModelSQL, ModelView):
             with Transaction().set_context(company=channel.company.id):
                 try:
                     channel.import_orders()
-                except UserError:
+                except NotImplementedError:
                     # Silently pass if method is not implemented
                     pass
 
@@ -270,7 +269,7 @@ class SaleChannel(ModelSQL, ModelView):
             with Transaction().set_context(company=channel.company.id):
                 try:
                     channel.export_product_prices()
-                except UserError:
+                except NotImplementedError:
                     # Silently pass if method is not implemented
                     pass
 
@@ -287,7 +286,7 @@ class SaleChannel(ModelSQL, ModelView):
             with Transaction().set_context(company=channel.company.id):
                 try:
                     channel.export_product_catalog()
-                except UserError:
+                except NotImplementedError:
                     # Silently pass if method is not implemented
                     pass
 
@@ -299,7 +298,7 @@ class SaleChannel(ModelSQL, ModelView):
         the responsibility of those channels to implement importing or call
         super to delegate.
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "Method export_product_catalog is not implemented yet for %s "
             "channels" % self.source
         )
@@ -314,7 +313,7 @@ class SaleChannel(ModelSQL, ModelView):
 
         :return: List of active records of sale orders that are imported
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "Import orders is not implemented for %s channels" % self.source
         )
 
@@ -331,7 +330,7 @@ class SaleChannel(ModelSQL, ModelView):
 
         :return: imported sale order active record
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "Import order is not implemented for %s channels" % self.source
         )
 
@@ -345,7 +344,7 @@ class SaleChannel(ModelSQL, ModelView):
 
         :return: List of active records of products that are imported
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "Method import_products is not implemented for %s channel yet"
             % self.source
         )  # pragma: nocover
@@ -363,7 +362,7 @@ class SaleChannel(ModelSQL, ModelView):
 
         :return: imported product active record
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "Method import_product is not implemented for %s channel yet"
             % self.source
         )  # pragma: nocover
@@ -403,7 +402,7 @@ class SaleChannel(ModelSQL, ModelView):
         the responsibility of those channels to implement importing or call
         super to delegate.
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "This feature has not been implemented for %s channel yet"
             % self.source
         )
