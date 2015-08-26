@@ -5,7 +5,6 @@
 """
 from trytond.pool import PoolMeta, Pool
 from trytond.transaction import Transaction
-from trytond.exceptions import UserError
 from trytond.pyson import Eval, Bool
 from trytond.model import ModelView, fields, ModelSQL
 
@@ -205,6 +204,12 @@ class SaleChannel(ModelSQL, ModelView):
             company = Company(SaleChannel.default_company())  # pragma: nocover
         return company and company.party.id or None
 
+    @classmethod
+    def get_current_channel(cls):
+        """Helper method to get the current current_channel.
+        """
+        return cls(Transaction().context['current_channel'])
+
     def get_order_states_to_import(self):
         """
         Return list of `sale.channel.order_state` to import orders
@@ -229,7 +234,7 @@ class SaleChannel(ModelSQL, ModelView):
         :return: List of active records of products for which prices are
         exported
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "This feature has not been implemented for %s channel yet."
             % self.source
         )
@@ -247,7 +252,7 @@ class SaleChannel(ModelSQL, ModelView):
             with Transaction().set_context(company=channel.company.id):
                 try:
                     channel.import_orders()
-                except UserError:
+                except NotImplementedError:
                     # Silently pass if method is not implemented
                     pass
 
@@ -264,7 +269,7 @@ class SaleChannel(ModelSQL, ModelView):
             with Transaction().set_context(company=channel.company.id):
                 try:
                     channel.export_product_prices()
-                except UserError:
+                except NotImplementedError:
                     # Silently pass if method is not implemented
                     pass
 
@@ -281,7 +286,7 @@ class SaleChannel(ModelSQL, ModelView):
             with Transaction().set_context(company=channel.company.id):
                 try:
                     channel.export_product_catalog()
-                except UserError:
+                except NotImplementedError:
                     # Silently pass if method is not implemented
                     pass
 
@@ -293,7 +298,7 @@ class SaleChannel(ModelSQL, ModelView):
         the responsibility of those channels to implement importing or call
         super to delegate.
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "Method export_product_catalog is not implemented yet for %s "
             "channels" % self.source
         )
@@ -308,7 +313,7 @@ class SaleChannel(ModelSQL, ModelView):
 
         :return: List of active records of sale orders that are imported
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "Import orders is not implemented for %s channels" % self.source
         )
 
@@ -325,7 +330,7 @@ class SaleChannel(ModelSQL, ModelView):
 
         :return: imported sale order active record
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "Import order is not implemented for %s channels" % self.source
         )
 
@@ -339,7 +344,7 @@ class SaleChannel(ModelSQL, ModelView):
 
         :return: List of active records of products that are imported
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "Method import_products is not implemented for %s channel yet"
             % self.source
         )  # pragma: nocover
@@ -357,10 +362,22 @@ class SaleChannel(ModelSQL, ModelView):
 
         :return: imported product active record
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "Method import_product is not implemented for %s channel yet"
             % self.source
         )  # pragma: nocover
+
+    def get_product(self, identifier):
+        """
+        Given a SKU find the product or if it aint there create it and then
+        return the active record of the product. This cannot be done async
+        under any circumstances, because a product created on another
+        transaction will not be visible to the current transaction unless the
+        transaction is started over.
+
+        :param identifier: product identifier
+        """
+        return self.import_product(identifier)
 
     @classmethod
     @ModelView.button_action('sale_channel.wizard_import_data')
@@ -385,7 +402,7 @@ class SaleChannel(ModelSQL, ModelView):
         the responsibility of those channels to implement importing or call
         super to delegate.
         """
-        raise self.raise_user_error(
+        raise NotImplementedError(
             "This feature has not been implemented for %s channel yet"
             % self.source
         )

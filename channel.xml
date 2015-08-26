@@ -69,6 +69,14 @@
             <field name="perm_create" eval="True"/>
             <field name="perm_delete" eval="False"/>
         </record>
+        <record model="ir.model.access" id="access_channel_exception">
+            <field name="model" search="[('model', '=', 'channel.exception')]"/>
+            <field name="group" ref="sale.group_sale"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
 
         <!-- Sales view -->
         <record model="ir.action.act_window" id="act_sale_form_all">
