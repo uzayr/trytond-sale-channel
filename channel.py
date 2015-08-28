@@ -357,7 +357,7 @@ class SaleChannel(ModelSQL, ModelView):
         Listing = Pool().get('product.product.channel_listing')
 
         listings = self.get_listings_to_export_inventory()
-        self.last_inventory_export_time = datetime.now()
+        self.last_inventory_export_time = datetime.utcnow()
         self.save()
 
         # TODO: check if inventory export is allowed for this channel
