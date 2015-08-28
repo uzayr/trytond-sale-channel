@@ -589,8 +589,8 @@ class TestSaleChannel(BaseTestCase):
                 # again
                 self.assertEqual(import_data.transition_next(), 'import_')
 
-                with self.assertRaises(UserError):
-                    # UserError is thrown in this case.
+                with self.assertRaises(NotImplementedError):
+                    # NotImplementedError is thrown in this case.
                     # Importing orders feature is not available in this module
                     import_data.transition_import_()
 

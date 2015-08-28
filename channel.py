@@ -3,6 +3,8 @@
     sale_channel.py
 
 """
+from datetime import datetime
+
 from trytond.pool import PoolMeta, Pool
 from trytond.transaction import Transaction
 from trytond.pyson import Eval, Bool
@@ -139,6 +141,11 @@ class SaleChannel(ModelSQL, ModelView):
     last_order_import_time_required = fields.Function(
         fields.DateTime('Last Order Import Time Required'),
         'get_last_order_import_time_required'
+    )
+
+    last_inventory_export_time = fields.DateTime(
+        'Last Inventory Export Time', states=INVISIBLE_IF_MANUAL,
+        depends=['source']
     )
 
     def get_last_order_import_time_required(self, name):
@@ -302,6 +309,72 @@ class SaleChannel(ModelSQL, ModelView):
             "Method export_product_catalog is not implemented yet for %s "
             "channels" % self.source
         )
+
+    def get_listings_to_export_inventory(self):
+        """
+        This method returns listing, which needs inventory update
+
+        Downstream module can override change its implementation
+
+        :return: List of AR of `product.product.channel_listing`
+        """
+        ChannelListing = Pool().get('product.product.channel_listing')
+        cursor = Transaction().cursor
+
+        if not self.last_inventory_export_time:
+            # Return all active listings
+            return ChannelListing.search([
+                ('channel', '=', self),
+                ('state', '=', 'active')
+            ])
+        else:
+            # Query to find listings
+            #   in which product inventory is recently updated or
+            #   listing it self got updated recently
+            cursor.execute("""
+                SELECT listing.id
+                FROM product_product_channel_listing AS listing
+                INNER JOIN stock_move ON stock_move.product = listing.product
+                WHERE listing.channel = %s AND listing.state = 'active' AND
+                (
+                    COALESCE(stock_move.write_date, stock_move.create_date) > %s
+                    OR
+                    COALESCE(listing.write_date, listing.create_date) > %s
+                )
+                GROUP BY listing.id
+            """, (
+                self.channel.id,
+                self.last_inventory_export_time,
+                self.last_inventory_export_time,
+            ))
+            listing_ids = map(lambda r: r[0], cursor.fetchall())
+            return ChannelListing.browse(listing_ids)
+
+    def export_inventory(self):
+        """
+        Export inventory to external channel
+        """
+        Listing = Pool().get('product.product.channel_listing')
+
+        listings = self.get_listings_to_export_inventory()
+        self.last_inventory_export_time = datetime.now()
+        self.save()
+
+        # TODO: check if inventory export is allowed for this channel
+        Listing.export_bulk_inventory(listings)
+
+    @classmethod
+    def export_inventory_from_cron(cls):  # pragma: nocover
+        """
+        Cron method to export inventory to external channel
+        """
+        for channel in cls.search([]):
+            with Transaction().set_context(company=channel.company.id):
+                try:
+                    channel.export_inventory()
+                except NotImplementedError:
+                    # Silently pass if method is not implemented
+                    pass
 
     def import_orders(self):
         """
