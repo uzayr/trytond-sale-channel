@@ -343,7 +343,7 @@ class SaleChannel(ModelSQL, ModelView):
                 )
                 GROUP BY listing.id
             """, (
-                self.channel.id,
+                self.id,
                 self.last_inventory_export_time,
                 self.last_inventory_export_time,
             ))
