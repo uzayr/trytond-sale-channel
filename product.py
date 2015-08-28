@@ -81,3 +81,29 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
             "create_from is not implemented in channel listing for %s channels"
             % channel.source
         )
+
+    def export_inventory(self):
+        """
+        Export listing.product inventory to listing.channel
+
+        Since external channels are implemented by downstream modules, it is
+        the responsibility of those channels to implement exporting or call
+        super to delegate.
+        """
+        raise NotImplementedError(
+            "Export inventory is not implemented for %s channels"
+            % self.channel.source
+        )
+
+    @classmethod
+    def export_bulk_inventory(cls, listings):
+        """
+        Export listing.product inventory to listing.channel in bulk
+
+        Since external channels are implemented by downstream modules, it is
+        the responsibility of those channels to implement bulk exporting for
+        respective channels.
+        Default behaviour is to export inventory individually.
+        """
+        for listing in listings:
+            listing.export_inventory()
