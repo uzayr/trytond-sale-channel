@@ -6,6 +6,7 @@
 import sys
 import os
 import unittest
+from decimal import Decimal
 from contextlib import nested
 
 import trytond.tests.test_tryton
@@ -48,6 +49,43 @@ class BaseTestCase(unittest.TestCase):
         self.ImportDataWizard = POOL.get(
             'sale.channel.import_data', type='wizard'
         )
+
+    def _create_product_template(self, name, vlist, uri, uom=u'Unit'):
+        """
+        Create a product template with products and return its ID
+        :param name: Name of the product
+        :param vlist: List of dictionaries of values to create
+        :param uri: uri of product template
+        :param uom: Note it is the name of UOM (not symbol or code)
+        """
+        ProductTemplate = POOL.get('product.template')
+        Uom = POOL.get('product.uom')
+
+        for values in vlist:
+            values['name'] = name
+            values['default_uom'], = Uom.search([('name', '=', uom)], limit=1)
+            values['sale_uom'], = Uom.search([('name', '=', uom)], limit=1)
+            values['products'] = [('create', [{}])]
+        return ProductTemplate.create(vlist)
+
+    def _get_account_by_kind(self, kind, company=None, silent=True):
+        """Returns an account with given spec
+        :param kind: receivable/payable/expense/revenue
+        :param silent: dont raise error if account is not found
+        """
+        Account = POOL.get('account.account')
+        Company = POOL.get('company.company')
+
+        if company is None:
+            company, = Company.search([], limit=1)
+
+        accounts = Account.search([
+            ('kind', '=', kind),
+            ('company', '=', company)
+        ], limit=1)
+        if not accounts and not silent:
+            raise Exception("Account not found")
+        return accounts[0] if accounts else False
 
     def _create_coa_minimal(self, company):
         """Create a minimal chart of accounts
@@ -188,6 +226,34 @@ class BaseTestCase(unittest.TestCase):
         )
         self.price_list.save()
         self._create_coa_minimal(self.company)
+
+        # Create product templates with products
+        self.template1, = self._create_product_template(
+            'product-1',
+            [{
+                'type': 'goods',
+                'salable': True,
+                'list_price': Decimal('10'),
+                'cost_price': Decimal('5'),
+                'account_expense': self._get_account_by_kind('expense').id,
+                'account_revenue': self._get_account_by_kind('revenue').id,
+            }],
+            uri='product-1',
+        )
+        self.template2, = self._create_product_template(
+            'product-2',
+            [{
+                'type': 'goods',
+                'salable': True,
+                'list_price': Decimal('15'),
+                'cost_price': Decimal('5'),
+                'account_expense': self._get_account_by_kind('expense').id,
+                'account_revenue': self._get_account_by_kind('revenue').id,
+            }],
+            uri='product-2',
+        )
+        self.product1 = self.template1.products[0]
+        self.product2 = self.template2.products[0]
 
         with Transaction().set_context(company=self.company.id):
             self.channel1, self.channel2, self.channel3, self.channel4 = \
@@ -593,6 +659,43 @@ class TestSaleChannel(BaseTestCase):
                     # NotImplementedError is thrown in this case.
                     # Importing orders feature is not available in this module
                     import_data.transition_import_()
+
+    def test_0200_channel_availability(self):
+        StockMove = POOL.get('stock.move')
+        Location = POOL.get('stock.location')
+
+        with Transaction().start(DB_NAME, 1, context=CONTEXT):
+            self.setup_defaults()
+
+            self.assertEqual(
+                self.channel1.get_availability(self.product1),
+                {'type': 'bucket', 'value': 'out_of_stock'}
+            )
+            self.assertEqual(
+                self.channel1.get_availability(self.product2),
+                {'type': 'bucket', 'value': 'out_of_stock'}
+            )
+
+            lost_and_found, = Location.search([
+                ('type', '=', 'lost_found')
+            ])
+            with Transaction().set_context(company=self.company.id):
+                # Bring in inventory for item 1
+                StockMove.create([{
+                    'from_location': lost_and_found,
+                    'to_location': self.channel1.warehouse.storage_location,
+                    'quantity': 10,
+                    'product': self.product1,
+                    'uom': self.product1.default_uom,
+                }])
+            self.assertEqual(
+                self.channel1.get_availability(self.product1),
+                {'type': 'bucket', 'value': 'in_stock'}
+            )
+            self.assertEqual(
+                self.channel1.get_availability(self.product2),
+                {'type': 'bucket', 'value': 'out_of_stock'}
+            )
 
 
 def suite():
