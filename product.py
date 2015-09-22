@@ -4,6 +4,7 @@
 
 """
 from trytond.pool import PoolMeta
+from trytond.transaction import Transaction
 from trytond.model import ModelView, fields, ModelSQL
 
 __metaclass__ = PoolMeta
@@ -115,3 +116,25 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
         """
         for listing in listings:
             listing.export_inventory()
+
+    def get_availability_context(self):
+        """
+        Allow overriding the context used to compute availability of
+        products.
+        """
+        return self.channel.get_availability_context()
+
+    def get_availability(self):
+        """
+        Return the availability of the product for this listing
+        """
+        with Transaction().set_context(**self.get_availability_context()):
+            rv = {'type': 'bucket'}
+            quantity = Product.get_quantity(
+                [self.product], 'quantity'
+            )[self.product.id]
+            if quantity > 0:
+                rv['value'] = 'in_stock'
+            else:
+                rv['value'] = 'out_of_stock'
+            return rv

@@ -549,6 +549,50 @@ class SaleChannel(ModelSQL, ModelView):
 
         return OrderState.create([values])[0]
 
+    def get_availability_context(self):
+        """
+        Return the context in which the stock availability of any product must
+        be computed
+        """
+        return {
+            'locations': [self.warehouse.id],
+        }
+
+    def get_availability(self, product):
+        """
+        Return availability of the product within the context of this channel
+
+        Availability consists of three factors:
+
+            type: finite, bucket, infinite
+            quantity: (optional) quantity available
+            value: in_stock, limited, out_of_stock
+
+        If this looks like the value in the stripe relay API, do not be
+        confused, they are the same :)
+        """
+        Listing = Pool().get('product.product.channel_listing')
+        Product = Pool().get('product.product')
+
+        listings = Listing.search([
+            ('channel', '=', self.id),
+            ('product', '=', product),
+        ])
+        if listings:
+            # If there are listings, return the values from listing since
+            # they override channel defaults for a product and channel
+            return listings[0].get_availability()
+
+        with Transaction().set_context(**self.get_availability_context()):
+            rv = {'type': 'bucket'}
+            quantity = Product.get_quantity([product], 'quantity')[product.id]
+            if quantity > 0:
+                rv['value'] = 'in_stock'
+            else:
+                rv['value'] = 'out_of_stock'
+
+        return rv
+
 
 class ReadUser(ModelSQL):
     """
