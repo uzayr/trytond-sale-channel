@@ -10,7 +10,9 @@ from decimal import Decimal
 from contextlib import nested
 
 import trytond.tests.test_tryton
-from trytond.tests.test_tryton import POOL, DB_NAME, USER, CONTEXT
+from trytond.tests.test_tryton import (
+    POOL, DB_NAME, USER, CONTEXT, ModuleTestCase
+)
 from trytond.exceptions import UserError
 from trytond.transaction import Transaction
 DIR = os.path.abspath(os.path.normpath(os.path.join(
@@ -20,10 +22,12 @@ if os.path.isdir(DIR):
     sys.path.insert(0, os.path.dirname(DIR))
 
 
-class BaseTestCase(unittest.TestCase):
+class BaseTestCase(ModuleTestCase):
     '''
     Base Test Case sale payment module.
     '''
+
+    module = 'sale_channel'
 
     def setUp(self):
         """

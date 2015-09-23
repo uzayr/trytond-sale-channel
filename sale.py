@@ -21,8 +21,8 @@ class Sale:
         ],
         states={
             'readonly': Or(
-                (Eval('id', default=0) > 0),
-                Bool(Eval('lines', default=[])),
+                (Eval('id', 0) > 0),
+                Bool(Eval('lines', [])),
             )
         }, depends=['id']
     )
@@ -39,6 +39,13 @@ class Sale:
     exceptions = fields.One2Many(
         "channel.exception", "origin", "Exceptions"
     )
+
+    @classmethod
+    def view_attributes(cls):
+        return super(Sale, cls).view_attributes() + [
+            ('//page[@id="exceptions"]', 'states', {
+                'invisible': Eval('source') == 'manual'
+            })]
 
     @classmethod
     def search_has_channel_exception(cls, name, clause):
@@ -183,43 +190,30 @@ class Sale:
     @fields.depends('channel', 'party')
     def on_change_channel(self):
         if not self.channel:
-            return {}  # pragma: nocover
-        res = {}
+            return  # pragma: nocover
         for fname in ('company', 'warehouse', 'currency', 'payment_term'):
             fvalue = getattr(self.channel, fname)
             if fvalue:
-                res[fname] = fvalue.id
+                setattr(self, fname, fvalue.id)
         if (not self.party or not self.party.sale_price_list):
-            res['price_list'] = self.channel.price_list.id  # pragma: nocover
+            self.price_list = self.channel.price_list.id  # pragma: nocover
         if self.channel.invoice_method:
-            res['invoice_method'] = self.channel.invoice_method
+            self.invoice_method = self.channel.invoice_method
         if self.channel.shipment_method:
-            res['shipment_method'] = self.channel.shipment_method
+            self.shipment_method = self.channel.shipment_method
 
-        # Update AR record
-        for key, value in res.iteritems():
-            if '.' not in key:
-                setattr(self, key, value)
-        return res
-
-    @fields.depends('channel')
+    @fields.depends('channel', 'price_list', 'invoice_address', 'payment_term')
     def on_change_party(self):  # pragma: nocover
-        res = super(Sale, self).on_change_party()
+        super(Sale, self).on_change_party()
         channel = self.channel
 
         if channel:
-            if not res.get('price_list') and res.get('invoice_address'):
-                res['price_list'] = channel.price_list.id
-                res['price_list.rec_name'] = channel.price_list.rec_name
-            if not res.get('payment_term') and res.get('invoice_address'):
-                res['payment_term'] = channel.payment_term.id
-                res['payment_term.rec_name'] = \
-                    self.channel.payment_term.rec_name
-
-        # Update AR record
-        for key, value in res.iteritems():
-            setattr(self, key, value)
-        return res
+            if not self.price_list and self.invoice_address:
+                self.price_list = channel.price_list.id
+                self.price_list.rec_name = channel.price_list.rec_name
+            if not self.payment_term and self.invoice_address:
+                self.payment_term = channel.payment_term.id
+                self.payment_term.rec_name = self.channel.payment_term.rec_name
 
     @fields.depends('channel')
     def on_change_with_channel_type(self, name=None):

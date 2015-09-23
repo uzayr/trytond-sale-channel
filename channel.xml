@@ -44,7 +44,7 @@
         <record model="ir.action.act_window" id="act_listed_product">
             <field name="name">Listed Products</field>
             <field name="res_model">product.product</field>
-            <field name="domain">[('channel_listings.channel', 'in', Eval('active_ids'))]</field>
+            <field name="domain" eval="[('channel_listings.channel', 'in', Eval('active_ids'))]" pyson="1"/>
         </record>
         <record model="ir.action.keyword"
                 id="act_open_sale_channel_keyword">
@@ -75,6 +75,13 @@
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+        <record model="ir.model.access" id="access_channel_exception_non_group">
+            <field name="model" search="[('model', '=', 'channel.exception')]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
             <field name="perm_delete" eval="False"/>
         </record>
 
