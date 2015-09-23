@@ -2,13 +2,77 @@
 """
     product.py
 
+Implementing Add listing wizard for downstream modules:
+
+* In the __setup__ method of `product.listing.add.start` in downstream
+  module, add the type as a valid channel type. Since this is non trivial
+  a convenience method `add_source` is provided which will add the source
+  type in an idempotent fashion.
+* Implement a StateView in the `product.listing.add` wizard with the name
+  `start_<source_name>`. This StateView can change the state to other state
+  views or transitions. Eventually it should end with the `end` state.
+
 """
 from trytond.pool import PoolMeta
+from trytond.wizard import Wizard, Button, StateTransition, StateView
 from trytond.transaction import Transaction
 from trytond.model import ModelView, fields, ModelSQL
 
 __metaclass__ = PoolMeta
-__all__ = ['ProductSaleChannelListing', 'Product']
+__all__ = [
+    'ProductSaleChannelListing', 'Product', 'AddProductListing',
+    'AddProductListingStart',
+]
+
+
+class AddProductListingStart(ModelView):
+    "Add listing form start"
+    __name__ = 'product.listing.add.start'
+
+    product = fields.Many2One(
+        'product.product', 'Product', readonly=True
+    )
+
+    channel = fields.Many2One(
+        'sale.channel', 'Channel', required=True,
+        domain=[('source', 'in', [])]
+    )
+
+    @classmethod
+    def add_source(cls, source):
+        """
+        A convenience method for downstream modules to add channel
+        source types once they have implemented the step in the wizard
+        below.
+
+        This method must be called from `__setup__` method of downstream
+        module.
+        """
+        source_leaf = cls.channel.domain[0][2]
+        if source not in source_leaf:
+            source_leaf.append(source)
+
+
+class AddProductListing(Wizard):
+    "Add product Channel Listing Wizard"
+    __name__ = 'product.listing.add'
+
+    start = StateView(
+        'product.listing.add.start',
+        'sale_channel.listing_add_start_form', [
+            Button('Cancel', 'end', 'tryton-cancel'),
+            Button('Next', 'next', 'tryton-go-next', default=True),
+        ]
+    )
+    next = StateTransition()
+
+    def default_start(self, fields):
+        return {
+            'product': Transaction().context['active_id']
+        }
+
+    def transition_next(self):
+        return 'start_%s' % self.start.channel.source
 
 
 class Product:
@@ -18,6 +82,18 @@ class Product:
     channel_listings = fields.One2Many(
         'product.product.channel_listing', 'product', 'Channel Listings',
     )
+
+    @classmethod
+    def __setup__(cls):
+        super(Product, cls).__setup__()
+        cls._buttons.update({
+            'add_listing': {},
+        })
+
+    @classmethod
+    @ModelView.button_action('sale_channel.wizard_add_listing')
+    def add_listing(cls, products):
+        pass
 
     @classmethod
     def create_from(cls, channel, product_data):
