@@ -12,7 +12,10 @@ from wizard import (
     ImportDataWizardProperties, ImportOrderStatesStart, ImportOrderStates,
     ExportPricesStatus, ExportPricesStart, ExportPrices
 )
-from product import ProductSaleChannelListing, Product
+from product import (
+    ProductSaleChannelListing, Product, AddProductListing,
+    AddProductListingStart
+)
 from sale import Sale
 from user import User
 
@@ -34,9 +37,11 @@ def register():
         ImportOrderStatesStart,
         ExportPricesStatus,
         ExportPricesStart,
+        AddProductListingStart,
         module='sale_channel', type_='model'
     )
     Pool.register(
+        AddProductListing,
         ImportDataWizard,
         ImportOrderStates,
         ExportPrices,
