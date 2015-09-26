@@ -13,7 +13,7 @@
     <label name="source"/>
     <field name="source"/>
     <notebook colspan="6">
-        <page string="Configuration" id="configuration" states="{'invisible': Eval('source') == 'manual' }">
+        <page string="Configuration" id="configuration">
             <notebook >
                 <page string="General" id="general">
                 </page>
@@ -23,7 +23,7 @@
                 </page>
                 <page string="Advanced" id="advanced">
                 </page>
-                <page string="Last Import / Export Time" id="last_import_export_time" states="{'invisible': Eval('source') == 'manual' }">
+                <page string="Last Import / Export Time" id="last_import_export_time">
                     <label name="last_order_import_time"/>
                     <field name="last_order_import_time"/>
                     <label name="last_order_export_time"/>
@@ -53,7 +53,7 @@
             <label name="price_list"/>
             <field name="price_list"/>
         </page>
-        <page string="Product Defaults" id="product_defaults" states="{'invisible': Eval('source') == 'manual' }">
+        <page string="Product Defaults" id="product_defaults">
             <label string="These values would be needed at the time of creating products, imported from the external channel." id="product_message"
                 colspan="4" yalign="0.0" xalign="0.0" xexpand="1"/>
             <newline/>
@@ -72,7 +72,7 @@
             <field name="order_states" colspan="6"/>
         </page>
     </notebook>
-    <group id="import_export_buttons" colspan="8" states="{'invisible': Eval('source') == 'manual' }">
+    <group id="import_export_buttons" colspan="8">
         <button string="Import Data" name="import_data_button"/>
     </group>
 </form>
