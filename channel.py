@@ -7,7 +7,7 @@ from datetime import datetime
 
 from trytond.pool import PoolMeta, Pool
 from trytond.transaction import Transaction
-from trytond.pyson import Eval, Bool
+from trytond.pyson import Eval, Bool, If
 from trytond.model import ModelView, fields, ModelSQL
 
 
@@ -154,6 +154,19 @@ class SaleChannel(ModelSQL, ModelView):
         or not
         """
         return False
+
+    @classmethod
+    def view_attributes(cls):
+        return super(SaleChannel, cls).view_attributes() + [
+            ('//page[@id="configuration"]', 'states', {
+                'invisible': Eval('source') == 'manual'
+            }), ('//page[@id="last_import_export_time"]', 'states', {
+                'invisible': Eval('source') == 'manual'
+            }), ('//page[@id="product_defaults"]', 'states', {
+                'invisible': Eval('source') == 'manual'
+            }), ('//page[@id="import_export_buttons"]', 'states', {
+                'invisible': Eval('source') == 'manual'
+            })]
 
     @classmethod
     def __setup__(cls):
@@ -638,6 +651,12 @@ class ChannelException(ModelSQL, ModelView):
         "sale.channel", "Channel", required=True, readonly=True
     )
     is_resolved = fields.Boolean("Is Resolved ?", select=True, readonly=True)
+
+    @classmethod
+    def view_attributes(cls):
+        return super(ChannelException, cls).view_attributes() + [(
+            '/tree', 'colors', If(~Bool(Eval('is_resolved')), 'red', 'grey')
+        )]
 
     @classmethod
     def __setup__(cls):
