@@ -307,4 +307,7 @@ class Sale:
         if data['action'] == 'process_automatically':
             Sale.process([self])
 
-        # TODO: Handle import as past action for magento state
+        if data['action'] == 'import_as_past':
+            # XXX: mark past orders as completed
+            self.state = 'done'
+            self.save()
