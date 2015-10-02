@@ -288,3 +288,23 @@ class Sale:
                 default['channel'] = cls.default_channel()
 
         return super(Sale, cls).copy(sales, default=default)
+
+    def process_to_channel_state(self, channel_state):
+        """
+        Process the sale in tryton based on the state of order
+        when its imported from channel
+
+        :param channel_state: State on external channel the order was imported
+        """
+        Sale = Pool().get('sale.sale')
+
+        data = self.channel.get_tryton_action(channel_state)
+
+        if data['action'] in ['process_manually', 'process_automatically']:
+            Sale.quote([self])
+            Sale.confirm([self])
+
+        if data['action'] == 'process_automatically':
+            Sale.process([self])
+
+        # TODO: Handle import as past action for magento state
