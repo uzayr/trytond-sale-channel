@@ -701,6 +701,50 @@ class TestSaleChannel(BaseTestCase):
                 {'type': 'bucket', 'value': 'out_of_stock'}
             )
 
+    def test_0095_check_duplicate_channel_identifier_for_sale(self):
+        """
+        Check if error is raised for duplicate channel identifier in sale
+        """
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            sale1 = self.create_sale(1, self.channel1)
+
+            sale2 = self.create_sale(1, self.channel1)
+
+            sale1.channel_identifier = 'Test Sale 1'
+            sale1.save()
+
+            # Put same channel identifer for sale 2, should raise error
+            with self.assertRaises(UserError):
+                sale2.channel_identifier = 'Test Sale 1'
+                sale2.save()
+
+    def test_0095_check_duplicate_channel_identifier_for_sale_line(self):
+        """
+        Check if error is raised for duplicate channel identifier in sale line
+        """
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            sale = self.create_sale(1, self.channel1)
+
+            self.SaleLine.create([{
+                'type': 'comment',
+                'channel_identifier': 'Sale Line 1',
+                'description': 'Sale Line',
+                'sale': sale.id
+            }])
+
+            # Create sale line with same channel identifer, should raise error
+            with self.assertRaises(UserError):
+                self.SaleLine.create([{
+                    'type': 'comment',
+                    'channel_identifier': 'Sale Line 1',
+                    'sale': sale,
+                    'description': 'Sale Line',
+                }])
+
 
 def suite():
     """
