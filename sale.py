@@ -8,7 +8,7 @@ from trytond.transaction import Transaction
 from trytond.pool import Pool, PoolMeta
 from trytond.pyson import Eval, Or, Bool
 
-__all__ = ['Sale']
+__all__ = ['Sale', 'SaleLine']
 __metaclass__ = PoolMeta
 
 
@@ -39,6 +39,9 @@ class Sale:
     exceptions = fields.One2Many(
         "channel.exception", "origin", "Exceptions"
     )
+
+    # XXX: to identify sale order in external channel
+    channel_identifier = fields.Char('Channel Identifier', readonly=True)
 
     @classmethod
     def search_has_channel_exception(cls, name, clause):
@@ -311,3 +314,11 @@ class Sale:
             # XXX: mark past orders as completed
             self.state = 'done'
             self.save()
+
+
+class SaleLine:
+    "Sale Line"
+    __name__ = 'sale.sale'
+
+    # XXX: to identify sale order item in external channel
+    channel_identifier = fields.Char('Channel Identifier', readonly=True)

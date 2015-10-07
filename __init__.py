@@ -16,7 +16,7 @@ from product import (
     ProductSaleChannelListing, Product, AddProductListing,
     AddProductListingStart
 )
-from sale import Sale
+from sale import Sale, SaleLine
 from user import User
 
 
@@ -29,6 +29,7 @@ def register():
         ChannelOrderState,
         User,
         Sale,
+        SaleLine,
         ProductSaleChannelListing,
         Product,
         ImportDataWizardStart,
