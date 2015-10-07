@@ -44,6 +44,22 @@ class Sale:
     channel_identifier = fields.Char('Channel Identifier', readonly=True)
 
     @classmethod
+    def validate(cls, sales):
+        super(Sale, cls).validate(sales)
+        for sale in sales:
+            sale.check_channel_identifier()
+
+    def check_channel_identifier(self):
+        """
+        Make sure sale has no duplicate channel identifier
+        """
+        if self.channel_identifier and self.search([
+            ('channel_identifier', '=', self.channel_identifier),
+            ('id', '!=', self.id),
+        ]):
+            self.raise_user_error('duplicate_order', (self.channel_identifier,))
+
+    @classmethod
     def search_has_channel_exception(cls, name, clause):
         """
         Returns domain for sale with exceptions
@@ -100,6 +116,7 @@ class Sale:
                 'You cannot create order under this channel because you do not '
                 'have required permissions'
             ),
+            "duplicate_order": 'Sale with Order ID "%s" already exists',
         })
 
     @classmethod
@@ -318,7 +335,36 @@ class Sale:
 
 class SaleLine:
     "Sale Line"
-    __name__ = 'sale.sale'
+    __name__ = 'sale.line'
 
     # XXX: to identify sale order item in external channel
     channel_identifier = fields.Char('Channel Identifier', readonly=True)
+
+    @classmethod
+    def __setup__(cls):
+        """
+        Setup the class before adding to pool
+        """
+        super(SaleLine, cls).__setup__()
+        cls._error_messages.update({
+            "duplicate_order_line":
+                'Sale Line with Order Item ID "%s" already exists',
+        })
+
+    @classmethod
+    def validate(cls, lines):
+        super(SaleLine, cls).validate(lines)
+        for line in lines:
+            line.check_channel_identifier()
+
+    def check_channel_identifier(self):
+        """
+        Make sure sale line has no duplicate channel identifier
+        """
+        if self.channel_identifier and self.search([
+            ('channel_identifier', '=', self.channel_identifier),
+            ('id', '!=', self.id),
+        ]):
+            self.raise_user_error(
+                'duplicate_order_line', (self.channel_identifier,)
+            )
