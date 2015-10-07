@@ -329,7 +329,7 @@ class Sale:
 
 class SaleLine:
     "Sale Line"
-    __name__ = 'sale.sale'
+    __name__ = 'sale.line'
 
     # XXX: to identify sale order item in external channel
     channel_identifier = fields.Char('Channel Identifier', readonly=True)
