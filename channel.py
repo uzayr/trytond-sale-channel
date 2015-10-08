@@ -200,10 +200,6 @@ class SaleChannel(ModelSQL, ModelView):
         return [('manual', 'Manual')]
 
     @staticmethod
-    def default_last_order_import_time():
-        return datetime.utcnow()
-
-    @staticmethod
     def default_active():
         return True
 
