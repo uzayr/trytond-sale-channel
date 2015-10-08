@@ -9,7 +9,7 @@ from trytond.pool import PoolMeta, Pool
 from trytond.transaction import Transaction
 from trytond.pyson import Eval, Bool
 from trytond.model import ModelView, fields, ModelSQL
-
+from dateutil.relativedelta import relativedelta
 
 __metaclass__ = PoolMeta
 __all__ = [
@@ -185,6 +185,10 @@ class SaleChannel(ModelSQL, ModelView):
         Get the source
         """
         return [('manual', 'Manual')]
+
+    @staticmethod
+    def default_last_order_import_time():
+        return datetime.utcnow() - relativedelta(months=1)
 
     @staticmethod
     def default_active():
