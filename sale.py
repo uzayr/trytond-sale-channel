@@ -311,6 +311,7 @@ class Sale:
         :param channel_state: State on external channel the order was imported
         """
         Sale = Pool().get('sale.sale')
+        Shipment = Pool().get('stock.shipment.out')
 
         data = self.channel.get_tryton_action(channel_state)
 
@@ -320,6 +321,11 @@ class Sale:
 
         if data['action'] == 'process_automatically':
             Sale.process([self])
+            for shipment in self.shipments:
+                if shipment.state == 'draft':
+                    Shipment.wait([shipment])
+                if shipment.state == 'waiting':
+                    Shipment.assign_try([shipment])
 
         if data['action'] == 'import_as_past':
             # XXX: mark past orders as completed
