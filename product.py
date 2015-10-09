@@ -149,7 +149,7 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
             (
                 'channel_product_unique',
                 'UNIQUE(channel, product)',
-                'Each product can be linked to only one Sale Channel!'
+                'Product is already mapped to this channel'
             )
         ]
 
