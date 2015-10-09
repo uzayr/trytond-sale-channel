@@ -601,6 +601,23 @@ class SaleChannel(ModelSQL, ModelView):
 
         return rv
 
+    @classmethod
+    def update_order_status_using_cron(cls):  # pragma: nocover
+        """
+        Cron method to update orders from channels using cron
+
+        Downstream module need not to implement this method.
+        It will automatically call update_order_status of the channel
+        Silently pass if update_order_status is not implemented
+        """
+        for channel in cls.search([]):
+            with Transaction().set_context(company=channel.company.id):
+                try:
+                    channel.update_order_status()
+                except NotImplementedError:
+                    # Silently pass if method is not implemented
+                    pass
+
     def update_order_status(self):
         """This method is responsible for updating order status from external
         channel.
