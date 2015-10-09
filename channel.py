@@ -597,6 +597,17 @@ class SaleChannel(ModelSQL, ModelView):
 
         return rv
 
+    def update_order_status(self):
+        """This method is responsible for updating order status from external
+        channel.
+        """
+        if self.source == 'manual':
+            return
+        raise NotImplementedError(
+            "This feature has not been implemented for %s channel yet."
+            % self.source
+        )
+
 
 class ReadUser(ModelSQL):
     """
