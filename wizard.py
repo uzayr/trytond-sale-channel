@@ -25,8 +25,22 @@ class ImportDataWizardStart(ModelView):
     message = fields.Text("Message", readonly=True)
 
     import_orders = fields.Boolean("Import Orders")
-    import_products = fields.Boolean("Import Products")
+    import_products = fields.Selection([
+        ('no', 'No'),
+        ('all', 'All'),
+        ('specific_product', 'Specific Product'),
+    ], "Import Products")
+    product_identifier = fields.Char(
+        "Product Identifier", states={
+            'required': Eval('import_products') == 'specific_product',
+            'invisible': Eval('import_products') != 'specific_product'
+        }, depends=['import_products']
+    )
     channel = fields.Many2One("sale.channel", "Channel", select=True)
+
+    @staticmethod
+    def default_import_products():
+        return 'no'
 
     @staticmethod
     def default_channel():
@@ -213,8 +227,11 @@ class ImportDataWizard(Wizard):
         if self.start.import_orders:
             sales = channel.import_orders()
 
-        if self.start.import_products:
+        if self.start.import_products == 'all':
             products = channel.import_products()
+
+        if self.start.import_products == 'specific_product':
+            products = channel.import_product(self.start.product_identifier)
 
         self.success.no_of_orders = len(sales)
         self.success.no_of_products = len(products)
