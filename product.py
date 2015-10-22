@@ -17,6 +17,7 @@ from trytond.pool import PoolMeta
 from trytond.wizard import Wizard, Button, StateTransition, StateView
 from trytond.transaction import Transaction
 from trytond.model import ModelView, fields, ModelSQL
+from trytond.pyson import Eval, Bool
 
 __metaclass__ = PoolMeta
 __all__ = [
@@ -134,6 +135,53 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
         fields.Char("Channel Source"),
         getter="on_change_with_channel_source"
     )
+
+    quantity = fields.Function(
+        fields.Float(
+            'Quantity',
+            digits=(16, Eval('unit_digits', 2)), depends=['unit_digits']
+        ), 'get_availability_fields'
+    )
+    unit_digits = fields.Function(
+        fields.Integer('Unit Digits'), 'get_unit_digits'
+    )
+    availability_type_used = fields.Function(
+        fields.Selection([
+            ('bucket', 'Bucket'),
+            ('quantity', 'Quantity'),
+            ('infinite', 'Infinite'),
+        ], 'Type'), 'get_availability_fields'
+    )
+    availability_used = fields.Function(
+        fields.Selection([
+            ('in_stock', 'In-Stock'),
+            ('out_of_stock', 'Out Of Stock'),
+        ], 'Availability', states={
+            'invisible': ~Bool(Eval('availability_type_used') == 'bucket')
+        }, depends=['availability_type_used']),
+        'get_availability_fields'
+    )
+
+    def get_unit_digits(self, name):
+        if self.product:
+            self.product.default_uom.digits
+        return 2
+
+    @classmethod
+    def get_availability_fields(cls, listings, names):
+        values = {
+            'availability_type_used': {},
+            'availability_used': {},
+            'quantity': {}
+        }
+        for listing in listings:
+            availability = listing.get_availability()
+            values['availability_type_used'][listing.id] = availability['type']
+            values['availability_used'][listing.id] = availability.get(
+                'value'
+            )
+            values['quantity'][listing.id] = availability.get('quantity')
+        return values
 
     @fields.depends('channel')
     def on_change_with_channel_source(self, name=None):
