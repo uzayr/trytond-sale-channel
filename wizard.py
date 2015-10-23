@@ -13,9 +13,167 @@ from trytond.pyson import Eval
 
 __all__ = [
     'ImportDataWizard', 'ImportDataWizardStart', 'ImportDataWizardSuccess',
+    'ExportDataWizard', 'ExportDataWizardStart', 'ExportDataWizardSuccess',
     'ImportDataWizardProperties', 'ImportOrderStatesStart', 'ImportOrderStates',
     'ExportPricesStatus', 'ExportPricesStart', 'ExportPrices'
 ]
+
+
+class ExportDataWizardStart(ModelView):
+    "Export Data Start View"
+    __name__ = 'sale.channel.export_data.start'
+
+    message = fields.Text("Message", readonly=True)
+
+    export_order_status = fields.Boolean("Export Order Status ?")
+    export_products = fields.Boolean("Export Products ?")
+    export_product_prices = fields.Boolean("Export Product Prices ?")
+    export_inventory = fields.Boolean("Export Inventory ?")
+    channel = fields.Many2One("sale.channel", "Channel", select=True)
+
+    @staticmethod
+    def default_channel():
+        """
+        Sets current channel as default
+        """
+        return Transaction().context.get('active_id')
+
+
+class ExportDataWizardSuccess(ModelView):
+    "Export Data Wizard Success View"
+    __name__ = 'sale.channel.export_data.success'
+
+    message = fields.Text("Message", readonly=True)
+
+
+class ExportDataWizard(Wizard):
+    "Wizard to export data to external channel"
+    __name__ = 'sale.channel.export_data'
+
+    start = StateView(
+        'sale.channel.export_data.start',
+        'sale_channel.export_data_start_view_form',
+        [
+            Button('Cancel', 'end', 'tryton-cancel'),
+            Button('Continue', 'next', 'tryton-go-next'),
+        ]
+    )
+    next = StateTransition()
+    export_ = StateTransition()
+
+    success = StateView(
+        'sale.channel.export_data.success',
+        'sale_channel.export_data_success_view_form',
+        [
+            Button('Ok', 'end', 'tryton-ok'),
+        ]
+    )
+
+    def default_start(self, data):
+        """
+        Sets default data for wizard
+
+        :param data: Wizard data
+        """
+        Channel = Pool().get('sale.channel')
+
+        channel = Channel(Transaction().context.get('active_id'))
+        return {
+            'message':
+                "This wizard will export all order status or products placed "
+                "on %s channel(%s). \n \n "
+                "Checking checkboxes below, you may choose to export products "
+                "or order status or product prices or all. \n \n "
+                " * Order status will be exported only for orders which are "
+                "updated / modified after the Last Order Export "
+                "Time. If Last Order Export Time is missing, then it will "
+                "export status for all the orders from beginning of time."
+                "[This might be slow depending on number of orders]. \n \n"
+                " * Products will be exported only which are "
+                "updated / modified after the Last Product Export "
+                "Time. If Last Product Export Time is missing, then all the "
+                " products will be exported from  from beginning of time."
+                "[This might be slow depending on number of products]. \n \n "
+                " * Products Prices will be exported only which are "
+                "updated / modified after the Last Product Prices Export "
+                "Time. If Last Product Price Export Time is missing, then all "
+                "the products prices will be exported from the beginning of "
+                "time. [This might be slow depending on number of products]. "
+                " \n\n* Inventory will be exported only for the products which "
+                "are updated / modified after the Last Inventory Export Time "
+                "If Last Inventory Export Time is missing, then all "
+                "the products inventory will be exported from the beginning of "
+                "time. [This might be slow depending on number of products]. "
+                % (channel.name, channel.source),
+            'channel': channel.id
+        }
+
+    def transition_next(self):
+        """
+        Move to export state transition
+        """
+        Channel = Pool().get('sale.channel')
+
+        channel = Channel(Transaction().context.get('active_id'))
+
+        self.start.channel = channel
+
+        return 'export_'
+
+    def transition_export_(self):  # pragma: nocover
+        """
+        Downstream channel implementation can customize the wizard
+        """
+        Channel = Pool().get('sale.channel')
+
+        channel = Channel(Transaction().context.get('active_id'))
+
+        if not (
+            self.start.export_order_status or self.start.export_products
+            or self.start.export_product_prices or self.start.export_inventory
+        ):
+            return self.raise_user_error(
+                "Atleast one checkbox need to be ticked"
+            )
+
+        message = '\n\nData Has Been Exported Successfully To %s \n\n' % (
+            channel.source
+        )
+        if self.start.export_order_status:
+            orders = channel.export_order_status()
+
+            message += 'Order Status Has Been Exported For Orders : %d \n\n' % (
+                len(orders)
+            )
+
+        if self.start.export_products:
+            products = channel.export_product_catalog()
+
+            message += 'Number of Products Exported : %d \n\n' % len(products)
+
+        if self.start.export_product_prices:
+            products_with_prices = channel.export_product_prices()
+
+            message += \
+                'Prices Has Been Exported For Products : %d \n\n' % (
+                    len(products_with_prices)
+                )
+
+        if self.start.export_inventory:
+            products_with_inventory = channel.export_inventory()
+
+            message += \
+                'Inventory Has Been Exported For Products : %d \n\n' % (
+                    len(products_with_inventory)
+                )
+
+        self.success.message = message
+        return 'success'
+
+    def default_success(self, data):  # pragma: nocover
+        return {
+            'message': self.success.message,
+        }
 
 
 class ImportDataWizardStart(ModelView):
