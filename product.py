@@ -13,7 +13,7 @@ Implementing Add listing wizard for downstream modules:
   views or transitions. Eventually it should end with the `end` state.
 
 """
-from trytond.pool import PoolMeta
+from trytond.pool import PoolMeta, Pool
 from trytond.wizard import Wizard, Button, StateTransition, StateView
 from trytond.transaction import Transaction
 from trytond.model import ModelView, fields, ModelSQL
@@ -252,12 +252,13 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
         """
         Return the availability of the product for this listing
         """
+        Product = Pool().get('product.product')
+
         with Transaction().set_context(**self.get_availability_context()):
             rv = {'type': 'bucket'}
-            quantity = Product.get_quantity(
-                [self.product], 'quantity'
-            )[self.product.id]
-            if quantity > 0:
+            product = Product(self.product.id)
+            rv['quantity'] = product.quantity
+            if rv['quantity'] > 0:
                 rv['value'] = 'in_stock'
             else:
                 rv['value'] = 'out_of_stock'
