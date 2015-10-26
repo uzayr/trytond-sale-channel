@@ -147,6 +147,12 @@ class SaleChannel(ModelSQL, ModelView):
         'Last Inventory Export Time', states=INVISIBLE_IF_MANUAL,
         depends=['source']
     )
+    # This field is to set according to sequence
+    sequence = fields.Integer('Sequence', select=True)
+
+    @staticmethod
+    def default_sequence():
+        return 10
 
     def get_last_order_import_time_required(self, name):
         """
@@ -170,6 +176,7 @@ class SaleChannel(ModelSQL, ModelView):
                 "No importable order state found\n"
                 "HINT: Import order states from Order States tab in Channel"
         })
+        cls._order.insert(0, ('sequence', 'ASC'))
 
     @staticmethod
     def default_default_uom():
