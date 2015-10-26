@@ -12,6 +12,8 @@
     <field name="address"/>
     <label name="source"/>
     <field name="source"/>
+    <label name="sequence"/>
+    <field name="sequence"/>
     <notebook colspan="6">
         <page string="Configuration" id="configuration">
             <notebook >
