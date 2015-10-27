@@ -528,7 +528,7 @@ class SaleChannel(ModelSQL, ModelView):
             % self.source
         )
 
-    def get_default_tryton_action(self, code):
+    def get_default_tryton_action(self, code, name=None):
         """
         Return default tryton_actions for this channel
         """
@@ -588,7 +588,7 @@ class SaleChannel(ModelSQL, ModelView):
         if order_states:
             return order_states[0]
 
-        values = self.get_default_tryton_action(code)
+        values = self.get_default_tryton_action(code, name)
         values.update({
             'name': name,
             'code': code,
