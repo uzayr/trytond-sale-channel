@@ -201,6 +201,10 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
             )
         ]
 
+        cls._buttons.update({
+            'export_inventory_button': {},
+        })
+
     @staticmethod
     def default_state():
         return 'active'
@@ -214,6 +218,11 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
             "create_from is not implemented in channel listing for %s channels"
             % channel.source
         )
+
+    @classmethod
+    @ModelView.button
+    def export_inventory_button(cls, listings):
+        return cls.export_bulk_inventory(listings)
 
     def export_inventory(self):
         """

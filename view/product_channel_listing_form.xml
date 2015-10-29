@@ -10,4 +10,5 @@
     <field name="product"/>
     <notebook>
     </notebook>
+    <button name="export_inventory_button" string="Export Inventory"/>
 </form>
