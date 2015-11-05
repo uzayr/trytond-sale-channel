@@ -39,6 +39,15 @@ class AddProductListingStart(ModelView):
         domain=[('source', 'in', [])]
     )
 
+    channel_source = fields.Function(
+        fields.Char("Channel Source"),
+        getter="on_change_with_channel_source"
+    )
+
+    @fields.depends('channel')
+    def on_change_with_channel_source(self, name=None):
+        return self.channel and self.channel.source
+
     @classmethod
     def add_source(cls, source):
         """
