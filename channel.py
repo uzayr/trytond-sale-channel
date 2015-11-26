@@ -9,7 +9,7 @@ from trytond.pool import PoolMeta, Pool
 from trytond.transaction import Transaction
 from trytond.pyson import Eval, Bool, If
 from trytond.model import ModelView, fields, ModelSQL
-
+from dateutil.relativedelta import relativedelta
 
 __metaclass__ = PoolMeta
 __all__ = [
@@ -147,6 +147,12 @@ class SaleChannel(ModelSQL, ModelView):
         'Last Inventory Export Time', states=INVISIBLE_IF_MANUAL,
         depends=['source']
     )
+    # This field is to set according to sequence
+    sequence = fields.Integer('Sequence', select=True)
+
+    @staticmethod
+    def default_sequence():
+        return 10
 
     def get_last_order_import_time_required(self, name):
         """
@@ -176,6 +182,7 @@ class SaleChannel(ModelSQL, ModelView):
         super(SaleChannel, cls).__setup__()
         cls._buttons.update({
             'import_data_button': {},
+            'export_data_button': {},
             'import_order_states_button': {},
         })
         cls._error_messages.update({
@@ -183,6 +190,7 @@ class SaleChannel(ModelSQL, ModelView):
                 "No importable order state found\n"
                 "HINT: Import order states from Order States tab in Channel"
         })
+        cls._order.insert(0, ('sequence', 'ASC'))
 
     @staticmethod
     def default_default_uom():
@@ -198,6 +206,10 @@ class SaleChannel(ModelSQL, ModelView):
         Get the source
         """
         return [('manual', 'Manual')]
+
+    @staticmethod
+    def default_last_order_import_time():
+        return datetime.utcnow() - relativedelta(months=1)
 
     @staticmethod
     def default_active():
@@ -230,14 +242,18 @@ class SaleChannel(ModelSQL, ModelView):
         """
         return cls(Transaction().context['current_channel'])
 
-    def get_order_states_to_import(self):
+    def get_order_states_to_import(self, include_past_orders=False):
         """
         Return list of `sale.channel.order_state` to import orders
         """
         OrderState = Pool().get('sale.channel.order_state')
 
+        order_states_to_import = ['process_automatically', 'process_manually']
+        if include_past_orders:
+            order_states_to_import.append('import_as_past')
+
         order_states = OrderState.search([
-            ('action', '!=', 'do_not_import'),
+            ('action', 'in', order_states_to_import),
             ('channel', '=', self.id),
         ])
         if not order_states:
@@ -253,6 +269,20 @@ class SaleChannel(ModelSQL, ModelView):
 
         :return: List of active records of products for which prices are
         exported
+        """
+        raise NotImplementedError(
+            "This feature has not been implemented for %s channel yet."
+            % self.source
+        )
+
+    def export_order_status(self):
+        """
+        Export order status to external channel
+
+        Since external channels are implemented by downstream modules, it is
+        the responsibility of those channels to reuse this method or call super.
+
+        :return: List of active records of orders exported
         """
         raise NotImplementedError(
             "This feature has not been implemented for %s channel yet."
@@ -374,7 +404,7 @@ class SaleChannel(ModelSQL, ModelView):
         self.save()
 
         # TODO: check if inventory export is allowed for this channel
-        Listing.export_bulk_inventory(listings)
+        return Listing.export_bulk_inventory(listings)
 
     @classmethod
     def export_inventory_from_cron(cls):  # pragma: nocover
@@ -471,6 +501,11 @@ class SaleChannel(ModelSQL, ModelView):
         pass  # pragma: nocover
 
     @classmethod
+    @ModelView.button_action('sale_channel.wizard_export_data')
+    def export_data_button(cls, channels):
+        pass  # pragma: nocover
+
+    @classmethod
     @ModelView.button_action('sale_channel.wizard_import_order_states')
     def import_order_states_button(cls, channels):
         """
@@ -493,7 +528,7 @@ class SaleChannel(ModelSQL, ModelView):
             % self.source
         )
 
-    def get_default_tryton_action(self, code):
+    def get_default_tryton_action(self, code, name=None):
         """
         Return default tryton_actions for this channel
         """
@@ -553,7 +588,7 @@ class SaleChannel(ModelSQL, ModelView):
         if order_states:
             return order_states[0]
 
-        values = self.get_default_tryton_action(code)
+        values = self.get_default_tryton_action(code, name)
         values.update({
             'name': name,
             'code': code,
@@ -605,6 +640,17 @@ class SaleChannel(ModelSQL, ModelView):
                 rv['value'] = 'out_of_stock'
 
         return rv
+
+    def update_order_status(self):
+        """This method is responsible for updating order status from external
+        channel.
+        """
+        if self.source == 'manual':
+            return
+        raise NotImplementedError(
+            "This feature has not been implemented for %s channel yet."
+            % self.source
+        )
 
 
 class ReadUser(ModelSQL):

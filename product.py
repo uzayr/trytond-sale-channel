@@ -13,10 +13,11 @@ Implementing Add listing wizard for downstream modules:
   views or transitions. Eventually it should end with the `end` state.
 
 """
-from trytond.pool import PoolMeta
+from trytond.pool import PoolMeta, Pool
 from trytond.wizard import Wizard, Button, StateTransition, StateView
 from trytond.transaction import Transaction
 from trytond.model import ModelView, fields, ModelSQL
+from trytond.pyson import Eval, Bool
 
 __metaclass__ = PoolMeta
 __all__ = [
@@ -135,6 +136,53 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
         getter="on_change_with_channel_source"
     )
 
+    quantity = fields.Function(
+        fields.Float(
+            'Quantity',
+            digits=(16, Eval('unit_digits', 2)), depends=['unit_digits']
+        ), 'get_availability_fields'
+    )
+    unit_digits = fields.Function(
+        fields.Integer('Unit Digits'), 'get_unit_digits'
+    )
+    availability_type_used = fields.Function(
+        fields.Selection([
+            ('bucket', 'Bucket'),
+            ('quantity', 'Quantity'),
+            ('infinite', 'Infinite'),
+        ], 'Type'), 'get_availability_fields'
+    )
+    availability_used = fields.Function(
+        fields.Selection([
+            ('in_stock', 'In-Stock'),
+            ('out_of_stock', 'Out Of Stock'),
+        ], 'Availability', states={
+            'invisible': ~Bool(Eval('availability_type_used') == 'bucket')
+        }, depends=['availability_type_used']),
+        'get_availability_fields'
+    )
+
+    def get_unit_digits(self, name):
+        if self.product:
+            self.product.default_uom.digits
+        return 2
+
+    @classmethod
+    def get_availability_fields(cls, listings, names):
+        values = {
+            'availability_type_used': {},
+            'availability_used': {},
+            'quantity': {}
+        }
+        for listing in listings:
+            availability = listing.get_availability()
+            values['availability_type_used'][listing.id] = availability['type']
+            values['availability_used'][listing.id] = availability.get(
+                'value'
+            )
+            values['quantity'][listing.id] = availability.get('quantity')
+        return values
+
     @fields.depends('channel')
     def on_change_with_channel_source(self, name=None):
         return self.channel and self.channel.source
@@ -149,9 +197,13 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
             (
                 'channel_product_unique',
                 'UNIQUE(channel, product)',
-                'Each product can be linked to only one Sale Channel!'
+                'Product is already mapped to this channel'
             )
         ]
+
+        cls._buttons.update({
+            'export_inventory_button': {},
+        })
 
     @staticmethod
     def default_state():
@@ -166,6 +218,11 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
             "create_from is not implemented in channel listing for %s channels"
             % channel.source
         )
+
+    @classmethod
+    @ModelView.button
+    def export_inventory_button(cls, listings):
+        return cls.export_bulk_inventory(listings)
 
     def export_inventory(self):
         """
@@ -204,12 +261,13 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
         """
         Return the availability of the product for this listing
         """
+        Product = Pool().get('product.product')
+
         with Transaction().set_context(**self.get_availability_context()):
             rv = {'type': 'bucket'}
-            quantity = Product.get_quantity(
-                [self.product], 'quantity'
-            )[self.product.id]
-            if quantity > 0:
+            product = Product(self.product.id)
+            rv['quantity'] = product.quantity
+            if rv['quantity'] > 0:
                 rv['value'] = 'in_stock'
             else:
                 rv['value'] = 'out_of_stock'

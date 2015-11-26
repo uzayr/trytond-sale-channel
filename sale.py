@@ -8,7 +8,7 @@ from trytond.transaction import Transaction
 from trytond.pool import Pool, PoolMeta
 from trytond.pyson import Eval, Or, Bool
 
-__all__ = ['Sale']
+__all__ = ['Sale', 'SaleLine']
 __metaclass__ = PoolMeta
 
 
@@ -40,12 +40,31 @@ class Sale:
         "channel.exception", "origin", "Exceptions"
     )
 
+    # XXX: to identify sale order in external channel
+    channel_identifier = fields.Char('Channel Identifier', readonly=True)
+
     @classmethod
     def view_attributes(cls):
         return super(Sale, cls).view_attributes() + [
             ('//page[@id="exceptions"]', 'states', {
                 'invisible': Eval('source') == 'manual'
             })]
+
+    @classmethod
+    def validate(cls, sales):
+        super(Sale, cls).validate(sales)
+        for sale in sales:
+            sale.check_channel_identifier()
+
+    def check_channel_identifier(self):
+        """
+        Make sure sale has no duplicate channel identifier
+        """
+        if self.channel_identifier and self.search([
+            ('channel_identifier', '=', self.channel_identifier),
+            ('id', '!=', self.id),
+        ]):
+            self.raise_user_error('duplicate_order', (self.channel_identifier,))
 
     @classmethod
     def search_has_channel_exception(cls, name, clause):
@@ -104,6 +123,7 @@ class Sale:
                 'You cannot create order under this channel because you do not '
                 'have required permissions'
             ),
+            "duplicate_order": 'Sale with Order ID "%s" already exists',
         })
 
     @classmethod
@@ -281,6 +301,8 @@ class Sale:
             if not sale.check_create_access(True):
                 default['channel'] = cls.default_channel()
 
+        default['channel_identifier'] = None
+
         return super(Sale, cls).copy(sales, default=default)
 
     def process_to_channel_state(self, channel_state):
@@ -291,6 +313,7 @@ class Sale:
         :param channel_state: State on external channel the order was imported
         """
         Sale = Pool().get('sale.sale')
+        Shipment = Pool().get('stock.shipment.out')
 
         data = self.channel.get_tryton_action(channel_state)
 
@@ -300,8 +323,62 @@ class Sale:
 
         if data['action'] == 'process_automatically':
             Sale.process([self])
+            for shipment in self.shipments:
+                if shipment.state == 'draft':
+                    Shipment.wait([shipment])
+                if shipment.state == 'waiting':
+                    Shipment.assign_try([shipment])
 
         if data['action'] == 'import_as_past':
             # XXX: mark past orders as completed
             self.state = 'done'
             self.save()
+
+
+class SaleLine:
+    "Sale Line"
+    __name__ = 'sale.line'
+
+    # XXX: to identify sale order item in external channel
+    channel_identifier = fields.Char('Channel Identifier', readonly=True)
+
+    @classmethod
+    def __setup__(cls):
+        """
+        Setup the class before adding to pool
+        """
+        super(SaleLine, cls).__setup__()
+        cls._error_messages.update({
+            "duplicate_order_line":
+                'Sale Line with Order Item ID "%s" already exists',
+        })
+
+    @classmethod
+    def copy(cls, lines, default=None):
+        """
+        Duplicating records
+        """
+        if default is None:
+            default = {}
+
+        default['channel_identifier'] = None
+
+        return super(SaleLine, cls).copy(lines, default=default)
+
+    @classmethod
+    def validate(cls, lines):
+        super(SaleLine, cls).validate(lines)
+        for line in lines:
+            line.check_channel_identifier()
+
+    def check_channel_identifier(self):
+        """
+        Make sure sale line has no duplicate channel identifier
+        """
+        if self.channel_identifier and self.search([
+            ('channel_identifier', '=', self.channel_identifier),
+            ('id', '!=', self.id),
+        ]):
+            self.raise_user_error(
+                'duplicate_order_line', (self.channel_identifier,)
+            )
