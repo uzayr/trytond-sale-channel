@@ -307,6 +307,8 @@ class Sale:
             if not sale.check_create_access(True):
                 default['channel'] = cls.default_channel()
 
+        default['channel_identifier'] = None
+
         return super(Sale, cls).copy(sales, default=default)
 
     def process_to_channel_state(self, channel_state):
@@ -356,6 +358,18 @@ class SaleLine:
             "duplicate_order_line":
                 'Sale Line with Order Item ID "%s" already exists',
         })
+
+    @classmethod
+    def copy(cls, lines, default=None):
+        """
+        Duplicating records
+        """
+        if default is None:
+            default = {}
+
+        default['channel_identifier'] = None
+
+        return super(SaleLine, cls).copy(lines, default=default)
 
     @classmethod
     def validate(cls, lines):

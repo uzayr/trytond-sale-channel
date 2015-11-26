@@ -741,6 +741,50 @@ class TestSaleChannel(BaseTestCase):
                     'description': 'Sale Line',
                 }])
 
+    def test_0100_return_sale_with_channel_identifier(self):
+        """
+        Check if return sale works with channel_identifier
+        """
+        ReturnSale = POOL.get('sale.return_sale', type='wizard')
+        Sale = POOL.get('sale.sale')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            # Return sale with channel identifier
+            sale1 = self.create_sale(1, self.channel1)
+
+            sale1.channel_identifier = 'Test Sale 1'
+            sale1.save()
+
+            session_id, _, _ = ReturnSale.create()
+
+            return_sale = ReturnSale(session_id)
+
+            with Transaction().set_context(active_ids=[sale1.id]):
+                return_sale.do_return_(return_sale.return_.get_action())
+
+            # Return sale with lines
+            sale2 = self.create_sale(1, self.channel1)
+            sale2.channel_identifier = 'Test Sale 2'
+            sale2.save()
+            Sale.write([sale2], {
+                'lines': [
+                    ('create', [{
+                        'type': 'comment',
+                        'channel_identifier': 'Test Sale Line',
+                        'description': 'Test Desc'
+                    }])
+                ]
+            })
+
+            session_id, _, _ = ReturnSale.create()
+
+            return_sale = ReturnSale(session_id)
+
+            with Transaction().set_context(active_ids=[sale2.id]):
+                return_sale.do_return_(return_sale.return_.get_action())
+
 
 def suite():
     """
