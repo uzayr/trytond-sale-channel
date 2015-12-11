@@ -465,7 +465,7 @@ class SaleChannel(ModelSQL, ModelView):
             % self.source
         )  # pragma: nocover
 
-    def import_product(self, identifier):
+    def import_product(self, identifier, product_data=None):
         """
         Import specific product from external channel based on product
         identifier.
