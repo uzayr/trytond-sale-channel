@@ -470,7 +470,7 @@ class SaleChannel(ModelSQL, ModelView):
             % self.source
         )  # pragma: nocover
 
-    def get_product(self, identifier):
+    def get_product(self, identifier, product_data=None):
         """
         Given a SKU find the product or if it aint there create it and then
         return the active record of the product. This cannot be done async
@@ -480,7 +480,7 @@ class SaleChannel(ModelSQL, ModelView):
 
         :param identifier: product identifier
         """
-        return self.import_product(identifier)
+        return self.import_product(identifier, product_data)
 
     @classmethod
     @ModelView.button_action('sale_channel.wizard_import_data')
