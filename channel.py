@@ -242,14 +242,14 @@ class SaleChannel(ModelSQL, ModelView):
         """
         return cls(Transaction().context['current_channel'])
 
-    def get_order_states_to_import(self, include_past_orders=False):
+    def get_order_states_to_import(self):
         """
         Return list of `sale.channel.order_state` to import orders
         """
         OrderState = Pool().get('sale.channel.order_state')
 
         order_states_to_import = ['process_automatically', 'process_manually']
-        if include_past_orders:
+        if Transaction.context.get('include_past_orders', False):
             order_states_to_import.append('import_as_past')
 
         order_states = OrderState.search([
