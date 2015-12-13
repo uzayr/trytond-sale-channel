@@ -139,33 +139,42 @@ class ExportDataWizard(Wizard):
         message = '\n\nData Has Been Exported Successfully To %s \n\n' % (
             channel.source
         )
+
+        orders = []
+        products = []
+        products_with_prices = []
+        products_with_inventory = []
         if self.start.export_order_status:
             orders = channel.export_order_status()
-
-            message += 'Order Status Has Been Exported For Orders : %d \n\n' % (
-                len(orders)
-            )
 
         if self.start.export_products:
             products = channel.export_product_catalog()
 
-            message += 'Number of Products Exported : %d \n\n' % len(products)
-
         if self.start.export_product_prices:
             products_with_prices = channel.export_product_prices()
-
-            message += \
-                'Prices Has Been Exported For Products : %d \n\n' % (
-                    len(products_with_prices)
-                )
 
         if self.start.export_inventory:
             products_with_inventory = channel.export_inventory()
 
-            message += \
-                'Inventory Has Been Exported For Products : %d \n\n' % (
-                    len(products_with_inventory)
-                )
+        if orders and isinstance(orders, list):
+            message += 'Order Status Has Been Exported For Orders : %d \n\n' % (
+                len(orders)
+            )
+
+        if products and isinstance(products, list):
+            message += 'Number of Products Exported : %d \n\n' % len(products)
+
+        if products_with_prices and isinstance(products_with_prices, list):
+            message += 'Prices Has Been Exported For Products : %d \n\n' % (
+                len(products_with_prices)
+            )
+
+        if products_with_inventory and isinstance(
+            products_with_inventory, list
+        ):
+            message += 'Inventory Has Been Exported For Products : %d \n\n' % (
+                len(products_with_inventory)
+            )
 
         self.success.message = message
         return 'success'
@@ -212,10 +221,7 @@ class ImportDataWizardSuccess(ModelView):
     "Import Sale Order Success View"
     __name__ = 'sale.channel.import_data.success'
 
-    no_of_orders = fields.Integer("Number Of Orders Imported", readonly=True)
-    no_of_products = fields.Integer(
-        "Number Of Products Imported", readonly=True
-    )
+    message = fields.Text("Message", readonly=True)
 
 
 class ImportDataWizardProperties(ModelView):
@@ -281,11 +287,11 @@ class ImportDataWizard(Wizard):
         return {
             'message':
                 "This wizard will import all orders and products placed on "
-                "%s channel(%s). Orders will be imported only which are "
+                "%s channel(%s). \n\n Orders will be imported only which are "
                 "placed after the Last Order Import "
                 "Time. If Last Order Import Time is missing, then it will "
                 "import all the orders from beginning of time. "
-                "[This might be slow depending on number of orders]. "
+                "[This might be slow depending on number of orders]. \n\n"
                 "Checking checkboxes below you may choose to import products "
                 "or orders or both. "
                 % (channel.name, channel.source),
@@ -381,6 +387,7 @@ class ImportDataWizard(Wizard):
 
         sales = []
         products = []
+        message = '\n\nData has been imported succesfully ! \n \n'
 
         if self.start.import_orders:
             sales = channel.import_orders()
@@ -391,14 +398,18 @@ class ImportDataWizard(Wizard):
         if self.start.import_products == 'specific_product':
             products = channel.import_product(self.start.product_identifier)
 
-        self.success.no_of_orders = len(sales)
-        self.success.no_of_products = len(products)
+        if products and isinstance(products, list):
+            message += 'Number of Products Imported : %d \n\n' % len(products)
+
+        if sales and isinstance(sales, list):
+            message += 'Number of Sale Orders Imported : %d \n\n' % len(sales)
+
+        self.success.message = message
         return 'success'
 
     def default_success(self, data):  # pragma: nocover
         return {
-            'no_of_orders': self.success.no_of_orders,
-            'no_of_products': self.success.no_of_products,
+            'message': self.success.message,
         }
 
 
