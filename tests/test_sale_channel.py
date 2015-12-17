@@ -262,6 +262,7 @@ class BaseTestCase(unittest.TestCase):
                     'code': 'C1',
                     'address': self.company_party.addresses[0].id,
                     'source': 'manual',
+                    'timezone': 'UTC',
                     'warehouse': self.Location.search([
                         ('code', '=', 'WH')
                     ])[0].id,
@@ -274,6 +275,7 @@ class BaseTestCase(unittest.TestCase):
                     'code': 'C2',
                     'address': self.company_party.addresses[0].id,
                     'source': 'manual',
+                    'timezone': 'US/Pacific',
                     'warehouse': self.Location.search([
                         ('code', '=', 'WH')
                     ])[0].id,
@@ -301,6 +303,7 @@ class BaseTestCase(unittest.TestCase):
                     'code': 'C4',
                     'address': self.company_party.addresses[0].id,
                     'source': 'manual',
+                    'timezone': 'US/Eastern',
                     'warehouse': self.Location.search([
                         ('code', '=', 'WH')
                     ])[0].id,
