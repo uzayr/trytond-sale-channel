@@ -10,6 +10,7 @@ from trytond.transaction import Transaction
 from trytond.pyson import Eval, Bool
 from trytond.model import ModelView, fields, ModelSQL
 from dateutil.relativedelta import relativedelta
+from trytond.modules.company.company import TIMEZONES
 
 __metaclass__ = PoolMeta
 __all__ = [
@@ -147,8 +148,17 @@ class SaleChannel(ModelSQL, ModelView):
         'Last Inventory Export Time', states=INVISIBLE_IF_MANUAL,
         depends=['source']
     )
+
+    timezone = fields.Selection(
+        TIMEZONES, 'Timezone',
+        translate=False, required=True
+    )
     # This field is to set according to sequence
     sequence = fields.Integer('Sequence', select=True)
+
+    @staticmethod
+    def default_timezone():
+        return 'UTC'
 
     @staticmethod
     def default_sequence():
