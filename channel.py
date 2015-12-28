@@ -395,13 +395,23 @@ class SaleChannel(ModelSQL, ModelView):
         Export inventory to external channel
         """
         Listing = Pool().get('product.product.channel_listing')
+        Channel = Pool().get('sale.channel')
+
+        last_inventory_export_time = datetime.utcnow()
+        channel_id = self.id
 
         listings = self.get_listings_to_export_inventory()
-        self.last_inventory_export_time = datetime.utcnow()
-        self.save()
-
         # TODO: check if inventory export is allowed for this channel
-        return Listing.export_bulk_inventory(listings)
+        Listing.export_bulk_inventory(listings)
+
+        # XXX: Exporting inventory to external channel is an expensive.
+        # To avoid lock on sale_channel table save record after
+        # exporting all inventory
+        with Transaction().new_cursor() as txn:
+            channel = Channel(channel_id)
+            channel.last_inventory_export_time = last_inventory_export_time
+            channel.save()
+            txn.cursor.commit()
 
     @classmethod
     def export_inventory_from_cron(cls):  # pragma: nocover
