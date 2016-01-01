@@ -19,6 +19,7 @@ from product import (
 )
 from sale import Sale, SaleLine
 from user import User
+from stock import StockLocation
 
 
 def register():
@@ -42,6 +43,7 @@ def register():
         ExportPricesStatus,
         ExportPricesStart,
         AddProductListingStart,
+        StockLocation,
         module='sale_channel', type_='model'
     )
     Pool.register(
