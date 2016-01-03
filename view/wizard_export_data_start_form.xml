@@ -3,8 +3,6 @@
     <field name="message" colspan="6"/>
     <label name="export_order_status"/>
     <field name="export_order_status"/>
-    <label name="export_products"/>
-    <field name="export_products"/>
     <label name="export_product_prices"/>
     <field name="export_product_prices"/>
     <label name="export_inventory"/>
