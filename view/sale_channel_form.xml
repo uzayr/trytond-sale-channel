@@ -20,6 +20,8 @@
                 <page string="General" id="general">
                 </page>
                 <page string="Connection" id="connection">
+                    <label name="timezone"/>
+                    <field name="timezone" colspan="3"/>
                 </page>
                 <page string="Taxes" id="taxes">
                 </page>
