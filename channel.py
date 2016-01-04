@@ -320,36 +320,6 @@ class SaleChannel(ModelSQL, ModelView):
                     # Silently pass if method is not implemented
                     pass
 
-    @classmethod
-    def export_product_catalog_using_cron(cls):  # pragma: nocover
-        """
-        Cron method to export product catalog to external channel using cron
-
-        Downstream module need not to implement this method.
-
-        Silently pass if export_product_catalog is not implemented
-        """
-        for channel in cls.search([]):
-            with Transaction().set_context(company=channel.company.id):
-                try:
-                    channel.export_product_catalog()
-                except NotImplementedError:
-                    # Silently pass if method is not implemented
-                    pass
-
-    def export_product_catalog(self):
-        """
-        Export product catalog to external channel
-
-        Since external channels are implemented by downstream modules, it is
-        the responsibility of those channels to implement importing or call
-        super to delegate.
-        """
-        raise NotImplementedError(
-            "Method export_product_catalog is not implemented yet for %s "
-            "channels" % self.source
-        )
-
     def get_listings_to_export_inventory(self):
         """
         This method returns listing, which needs inventory update

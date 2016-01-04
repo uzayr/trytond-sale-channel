@@ -26,7 +26,6 @@ class ExportDataWizardStart(ModelView):
     message = fields.Text("Message", readonly=True)
 
     export_order_status = fields.Boolean("Export Order Status ?")
-    export_products = fields.Boolean("Export Products ?")
     export_product_prices = fields.Boolean("Export Product Prices ?")
     export_inventory = fields.Boolean("Export Inventory ?")
     channel = fields.Many2One("sale.channel", "Channel", select=True)
@@ -129,7 +128,7 @@ class ExportDataWizard(Wizard):
         channel = Channel(Transaction().context.get('active_id'))
 
         if not (
-            self.start.export_order_status or self.start.export_products
+            self.start.export_order_status
             or self.start.export_product_prices or self.start.export_inventory
         ):
             return self.raise_user_error(
@@ -146,9 +145,6 @@ class ExportDataWizard(Wizard):
         products_with_inventory = []
         if self.start.export_order_status:
             orders = channel.export_order_status()
-
-        if self.start.export_products:
-            products = channel.export_product_catalog()
 
         if self.start.export_product_prices:
             products_with_prices = channel.export_product_prices()
