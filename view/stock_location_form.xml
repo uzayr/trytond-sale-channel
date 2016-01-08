@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-
-<data>
-    <xpath expr="//field[@name='type']" position="after">
-        <label name="subtype"/>
-        <field name="subtype"/>
-    </xpath>
-</data>
