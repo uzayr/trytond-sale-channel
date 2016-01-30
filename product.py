@@ -264,7 +264,9 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
         Allow overriding the context used to compute availability of
         products.
         """
-        return self.channel.get_availability_context()
+        return {
+            'locations': [self.channel.warehouse.id],
+        }
 
     def get_availability(self):
         """
