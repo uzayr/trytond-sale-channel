@@ -128,8 +128,8 @@ class ExportDataWizard(Wizard):
         channel = Channel(Transaction().context.get('active_id'))
 
         if not (
-            self.start.export_order_status
-            or self.start.export_product_prices or self.start.export_inventory
+            self.start.export_order_status or
+            self.start.export_product_prices or self.start.export_inventory
         ):
             return self.raise_user_error(
                 "Atleast one checkbox need to be ticked"

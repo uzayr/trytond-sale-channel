@@ -1,5 +1,4 @@
 psycopg2
-vobject==0.8.1c
 
 # Install this package itself
 .
