@@ -68,7 +68,7 @@
             <field name="read_users" colspan="6"/>
             <field name="create_users" colspan="6"/>
         </page>
-        <page string="Order States" id="order_states">
+        <page string="Order States" id="order_states" states="{'invisible': Eval('source') == 'manual' }" >
             <button string="Import Order States" name="import_order_states_button"/>
             <field name="order_states" colspan="6"/>
         </page>
