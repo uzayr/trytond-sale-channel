@@ -68,9 +68,6 @@
             <field name="read_users" colspan="6"/>
             <field name="create_users" colspan="6"/>
         </page>
-        <page string="Exceptions" id="exceptions">
-            <field name="exceptions"/>
-        </page>
         <page string="Order States" id="order_states">
             <button string="Import Order States" name="import_order_states_button"/>
             <field name="order_states" colspan="6"/>
