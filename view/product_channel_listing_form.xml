@@ -9,6 +9,6 @@
     <group colspan="4" id="button_state">
         <label name="state"/>
         <field name="state" colspan="2"/>
-        <button name="export_inventory_button" col="2" string="Export Inventory"/>
+        <button name="export_inventory_button" string="Export Inventory"/>
     </group>
 </form>
