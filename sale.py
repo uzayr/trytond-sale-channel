@@ -15,6 +15,8 @@ __metaclass__ = PoolMeta
 class Sale:
     __name__ = 'sale.sale'
 
+    #: A many2one field decides to which channel this sale
+    #: belongs to. This helps filling lot of default values on sale.
     channel = fields.Many2One(
         'sale.channel', 'Channel', required=True, select=True, domain=[
             ('id', 'in', Eval('context', {}).get('allowed_read_channels', [])),
@@ -27,15 +29,19 @@ class Sale:
         }, depends=['id']
     )
 
+    #: Function field which return source of the channel this sale belongs
+    #: to.
     channel_type = fields.Function(
         fields.Char('Channel Type'), 'on_change_with_channel_type'
     )
 
+    #: Boolean function field returns true if sale has any exception.
     has_channel_exception = fields.Function(
         fields.Boolean('Has Channel Exception ?'), 'get_has_channel_exception',
         searcher='search_has_channel_exception'
     )
 
+    #: One2Many to channel exception, lists all the exceptions.
     exceptions = fields.One2Many(
         "channel.exception", "origin", "Exceptions"
     )
@@ -314,9 +320,9 @@ class Sale:
     def process_to_channel_state(self, channel_state):
         """
         Process the sale in tryton based on the state of order
-        when its imported from channel
+        when its imported from channel.
 
-        :param channel_state: State on external channel the order was imported
+        :param channel_state: State on external channel the order was imported.
         """
         Sale = Pool().get('sale.sale')
         Shipment = Pool().get('stock.shipment.out')
