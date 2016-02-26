@@ -114,6 +114,10 @@ class SaleChannel(ModelSQL, ModelView):
         "sale.channel.order_state", "channel", "Order States"
     )
 
+    shipping_carriers = fields.One2Many(
+        'sale.channel.carrier', 'channel', 'Shipping Carriers'
+    )
+
     last_order_import_time = fields.DateTime(
         'Last Order Import Time',
         depends=['source', 'last_order_import_time_required'], states={
@@ -181,8 +185,11 @@ class SaleChannel(ModelSQL, ModelView):
             'import_data_button': {},
             'export_data_button': {},
             'import_order_states_button': {},
+            'import_shipping_carriers': {},
         })
         cls._error_messages.update({
+            "no_carriers_found":
+                "Shipping carrier is not configured for code: %s",
             "no_order_states_to_import":
                 "No importable order state found\n"
                 "HINT: Import order states from Order States tab in Channel"
@@ -238,6 +245,41 @@ class SaleChannel(ModelSQL, ModelView):
         """Helper method to get the current current_channel.
         """
         return cls(Transaction().context['current_channel'])
+
+    @classmethod
+    @ModelView.button
+    def import_shipping_carriers(cls, channels):
+        """
+        Create shipping carriers by importing data from external channel.
+
+        Since external channels are implemented by downstream modules, it is
+        the responsibility of those channels to reuse this method or call super.
+
+        :param instances: Active record list of magento instances
+        """
+        raise NotImplementedError(
+            "This feature has not been implemented."
+        )
+
+    def get_shipping_carrier(self, code):
+        """
+        Search for an existing carrier by matching code and channel.
+        If found, return its active record else raise_user_error.
+        """
+        SaleCarrierChannel = Pool().get('sale.channel.carrier')
+
+        try:
+            carrier, = SaleCarrierChannel.search([
+                ('code', '=', code),
+                ('channel', '=', self.id),
+            ])
+        except ValueError:
+            self.raise_user_error(
+                'no_carriers_found',
+                error_args=code
+            )
+        else:
+            return carrier
 
     def get_order_states_to_import(self):
         """

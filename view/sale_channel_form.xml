@@ -43,6 +43,12 @@
                 </page>                
             </notebook>
         </page>
+        <page string="Shipping Carriers" id="shipping_carriers">
+            <field name="shipping_carriers" colspan="4"/>
+            <group id="channel_buttons" col="3" colspan="6">
+                <button string="Import Shipping Carriers" name="import_shipping_carriers"/>
+            </group>
+        </page>
         <page string="Order Defaults" id="order">
             <label name="warehouse"/>
             <field name="warehouse" widget="selection"/>

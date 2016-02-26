@@ -17,6 +17,7 @@ from product import (
     ProductSaleChannelListing, Product, AddProductListing,
     AddProductListingStart
 )
+from carrier import SaleChannelCarrier
 from sale import Sale, SaleLine
 from user import User
 
@@ -28,6 +29,7 @@ def register():
         WriteUser,
         ChannelException,
         ChannelOrderState,
+        SaleChannelCarrier,
         User,
         Sale,
         SaleLine,
