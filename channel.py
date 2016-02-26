@@ -279,7 +279,7 @@ class SaleChannel(ModelSQL, ModelView):
                 error_args=code
             )
         else:
-            return carrier
+            return carrier.carrier
 
     def get_order_states_to_import(self):
         """
