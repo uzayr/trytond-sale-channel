@@ -13,6 +13,18 @@
             <field name="name">sale_channel_form</field>
         </record>
 
+        <!--Carriers-->
+        <record model="ir.ui.view" id="carrier_view_form">
+            <field name="model">sale.channel.carrier</field>
+            <field name="type">form</field>
+            <field name="name">channel_carrier_form</field>
+        </record>
+        <record model="ir.ui.view" id="carrier_view_tree">
+            <field name="model">sale.channel.carrier</field>
+            <field name="type">tree</field>
+            <field name="name">channel_carrier_tree</field>
+        </record>
+
         <!--Channel Exception-->
         <record model="ir.ui.view" id="channel_exception_form_view">
             <field name="model">channel.exception</field>
