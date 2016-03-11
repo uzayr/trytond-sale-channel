@@ -144,7 +144,7 @@ class SaleChannel(ModelSQL, ModelView):
     )
 
     last_order_import_time_required = fields.Function(
-        fields.DateTime('Last Order Import Time Required'),
+        fields.Boolean('Last Order Import Time Required'),
         'get_last_order_import_time_required'
     )
 
