@@ -15,7 +15,7 @@ from trytond.modules.company.company import TIMEZONES
 __metaclass__ = PoolMeta
 __all__ = [
     'SaleChannel', 'ReadUser', 'WriteUser', 'ChannelException',
-    'ChannelOrderState'
+    'ChannelOrderState', 'TaxMapping'
 ]
 
 STATES = {
@@ -98,6 +98,7 @@ class SaleChannel(ModelSQL, ModelView):
         fields.Many2One('party.party', 'Company Party'),
         'on_change_with_company_party'
     )
+    taxes = fields.One2Many("sale.channel.tax", "channel", "Taxes")
 
     # These fields would be needed at the time of product imports from
     # external channel
@@ -190,6 +191,8 @@ class SaleChannel(ModelSQL, ModelView):
         cls._error_messages.update({
             "no_carriers_found":
                 "Shipping carrier is not configured for code: %s",
+            "no_tax_found":
+                "%s (tax) of rate %f was not found.",
             "no_order_states_to_import":
                 "No importable order state found\n"
                 "HINT: Import order states from Order States tab in Channel"
@@ -688,6 +691,26 @@ class SaleChannel(ModelSQL, ModelView):
             % self.source
         )
 
+    def get_tax(self, name, rate):
+        """
+        Search for an existing Tax record by matching name and rate.
+        If found return its active record else raise user error.
+        """
+        TaxMapping = Pool().get('sale.channel.tax')
+
+        try:
+            mapped_tax, = TaxMapping.search([
+                ('name', '=', name),
+                ('rate', '=', rate),
+                ('channel', '=', self)
+            ])
+        except ValueError:
+            self.raise_user_error(
+                'no_tax_found', error_args=(name, rate)
+            )
+        else:
+            return mapped_tax.tax
+
 
 class ReadUser(ModelSQL):
     """
@@ -816,3 +839,26 @@ class ChannelOrderState(ModelSQL, ModelView):
     def default_channel():
         "Return default channel from context"
         return Transaction().context.get('current_channel')
+
+
+class TaxMapping(ModelSQL, ModelView):
+    'Sale Tax'
+    __name__ = 'sale.channel.tax'
+
+    name = fields.Char("Name", required=True)
+    rate = fields.Float("Rate", required=True)
+    tax = fields.Many2One("account.tax", "Tax", required=True)
+    channel = fields.Many2One("sale.channel", "Channel", required=True)
+
+    @classmethod
+    def __setup__(cls):
+        super(TaxMapping, cls).__setup__()
+
+        cls._error_messages.update({
+            'unique_tax_rate_per_channel':
+            "Tax rate and name must be unique per channel"
+        })
+        cls._sql_constraints += [
+            ('unique_tax_percent', 'UNIQUE(channel, name, rate)',
+             'unique_tax_rate_per_channel')
+        ]

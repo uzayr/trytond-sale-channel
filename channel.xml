@@ -183,5 +183,17 @@
             <field name="function">export_inventory_from_cron</field>
         </record>
 
+        <!-- sale tax -->
+        <record model="ir.ui.view" id="sale_tax_view_form">
+            <field name="model">sale.channel.tax</field>
+            <field name="type">form</field>
+            <field name="name">sale_tax_form</field>
+        </record>
+        <record model="ir.ui.view" id="sale_tax_view_tree">
+            <field name="model">sale.channel.tax</field>
+            <field name="type">tree</field>
+            <field name="name">sale_tax_tree</field>
+        </record>
+
     </data>
 </tryton>

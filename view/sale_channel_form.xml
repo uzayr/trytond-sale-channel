@@ -78,6 +78,9 @@
             <button string="Import Order States" name="import_order_states_button"/>
             <field name="order_states" colspan="6"/>
         </page>
+        <page string="Taxes" id="taxes">
+            <field name="taxes" colspan="4"/>
+        </page>
     </notebook>
     <group id="import_export_buttons" colspan="8" states="{'invisible': Eval('source') == 'manual' }">
         <button string="Import Data" name="import_data_button"/>

@@ -788,6 +788,58 @@ class TestSaleChannel(BaseTestCase):
             with Transaction().set_context(active_ids=[sale2.id]):
                 return_sale.do_return_(return_sale.return_.get_action())
 
+    def test_0110_map_tax(self):
+        """
+        Check if tax is mapped
+        """
+
+        SaleChannel = POOL.get('sale.channel')
+        SaleChannelTax = POOL.get('sale.channel.tax')
+        Tax = POOL.get('account.tax')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            new_channel, = SaleChannel.create([{
+                'name': 'Channel 1',
+                'code': 'C1',
+                'address': self.company_party.addresses[0].id,
+                'source': 'manual',
+                'warehouse': self.Location.search([
+                    ('code', '=', 'WH')
+                ])[0].id,
+                'currency': self.currency.id,
+                'invoice_method': 'manual',
+                'shipment_method': 'manual',
+                'payment_term': self.payment_term.id,
+                'price_list': self.price_list,
+                'company': self.company.id,
+            }])
+
+            tax1, = Tax.create([
+                {
+                    'name': "tax1",
+                    'description': "This is description",
+                    'type': 'percentage',
+                    'company': self.company.id,
+                    'invoice_account': self._get_account_by_kind('revenue').id,
+                    'credit_note_account':
+                        self._get_account_by_kind('revenue').id,
+                    'rate': Decimal('8.00'),
+                }
+            ])
+
+            mapped_tax, = SaleChannelTax.create([{
+                'name': 'new_channel_tax',
+                'rate': 8.00,
+                'tax': tax1.id,
+                'channel': new_channel.id,
+            }])
+
+            self.assertEqual(
+                new_channel.get_tax('new_channel_tax', float(8.00)), tax1
+            )
+
 
 def suite():
     """
