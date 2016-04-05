@@ -846,7 +846,7 @@ class TaxMapping(ModelSQL, ModelView):
     __name__ = 'sale.channel.tax'
 
     name = fields.Char("Name", required=True)
-    rate = fields.Float("Rate", required=True)
+    rate = fields.Numeric('Rate', digits=(14, 10), required=True)
     tax = fields.Many2One("account.tax", "Tax", required=True)
     channel = fields.Many2One("sale.channel", "Channel", required=True)
 
