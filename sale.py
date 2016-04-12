@@ -123,6 +123,9 @@ class Sale:
                 'have required permissions'
             ),
             "duplicate_order": 'Sale with Order ID "%s" already exists',
+            "channel_exception": (
+                "You missed some unresolved exceptions in sale %s."
+            ),
         })
 
     @classmethod
@@ -316,6 +319,14 @@ class Sale:
         default['channel_identifier'] = None
 
         return super(Sale, cls).copy(sales, default=default)
+
+    @classmethod
+    def confirm(cls, sales):
+        "Validate sale before confirming"
+        for sale in sales:
+            if sale.has_channel_exception:
+                cls.raise_user_error('channel_exception', sale.reference)
+        super(Sale, cls).confirm(sales)
 
     def process_to_channel_state(self, channel_state):
         """
