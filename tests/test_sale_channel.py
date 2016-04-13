@@ -831,14 +831,51 @@ class TestSaleChannel(BaseTestCase):
 
             mapped_tax, = SaleChannelTax.create([{
                 'name': 'new_channel_tax',
-                'rate': 8.00,
+                'rate': Decimal('8.00'),
                 'tax': tax1.id,
                 'channel': new_channel.id,
             }])
 
             self.assertEqual(
-                new_channel.get_tax('new_channel_tax', float(8.00)), tax1
+                new_channel.get_tax('new_channel_tax', Decimal('8.00')), tax1
             )
+
+    def test_0115_check_processing_of_sale(self):
+        """
+        Check if channel exception is being created
+        """
+        ChannelException = POOL.get('channel.exception')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            sale = self.create_sale(1, self.channel1)
+
+            self.assertFalse(sale.has_channel_exception)
+
+            channel_exception, = ChannelException.create([{
+                'origin': '%s,%s' % (sale.__name__, sale.id),
+                'log': 'Sale has exception',
+                'channel': sale.channel.id,
+            }])
+
+            self.assert_(channel_exception)
+
+            self.assertTrue(sale.has_channel_exception)
+
+            # sale should not be confirmed as long as channel exception
+            # is not resolved and error should be raised for it
+            with self.assertRaises(UserError):
+                self.Sale.confirm([sale])
+
+            # Mark exception as resolved
+            channel_exception.is_resolved = True
+            channel_exception.save()
+
+            self.assertFalse(sale.has_channel_exception)
+
+            # Exception error should not be raised after it is resolved
+            self.Sale.confirm([sale])
 
 
 def suite():
