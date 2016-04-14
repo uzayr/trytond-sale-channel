@@ -264,7 +264,7 @@ class SaleChannel(ModelSQL, ModelView):
             "This feature has not been implemented."
         )
 
-    def get_shipping_carrier(self, code):
+    def get_shipping_carrier(self, code, silent=False):
         """
         Search for an existing carrier by matching code and channel.
         If found, return its active record else raise_user_error.
@@ -277,6 +277,8 @@ class SaleChannel(ModelSQL, ModelView):
                 ('channel', '=', self.id),
             ])
         except ValueError:
+            if silent:
+                return None
             self.raise_user_error(
                 'no_carriers_found',
                 error_args=code
