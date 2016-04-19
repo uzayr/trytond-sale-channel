@@ -39,6 +39,19 @@
         <record model="ir.action.act_window" id="act_sale_channel_form">
             <field name="name">Channels</field>
             <field name="res_model">sale.channel</field>
+            <field name="context">{'active_test': False}</field>
+        </record>
+        <record model="ir.action.act_window.domain" id="action_sale_channel_view_domain_active">
+            <field name="name">Active</field>
+            <field name="sequence" eval="10"/>
+            <field name="domain">[('active', '=', True)]</field>
+            <field name="act_window" ref="act_sale_channel_form"/>
+        </record>
+        <record model="ir.action.act_window.domain" id="action_sale_channel_view_domain_disabled">
+            <field name="name">Disabled</field>
+            <field name="sequence" eval="10"/>
+            <field name="domain">[('active', '=', False)]</field>
+            <field name="act_window" ref="act_sale_channel_form"/>
         </record>
         <record model="ir.action.act_window.view" id="act_sale_channel_form_view_1">
             <field name="sequence" eval="10" />
