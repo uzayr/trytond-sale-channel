@@ -699,13 +699,18 @@ class SaleChannel(ModelSQL, ModelView):
         If found return its active record else raise user error.
         """
         TaxMapping = Pool().get('sale.channel.tax')
+        domain = [
+            ('rate', '=', rate),
+            ('channel', '=', self)
+        ]
+        if name:
+            # Search with name when it is provided
+            # Name can be explicitly passed as None, when external
+            # channels like magento does not provide it.
+            domain.append(('name', '=', name))
 
         try:
-            mapped_tax, = TaxMapping.search([
-                ('name', '=', name),
-                ('rate', '=', rate),
-                ('channel', '=', self)
-            ])
+            mapped_tax, = TaxMapping.search(domain)
         except ValueError:
             self.raise_user_error(
                 'no_tax_found', error_args=(name, rate)
