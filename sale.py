@@ -340,6 +340,10 @@ class Sale:
 
         data = self.channel.get_tryton_action(channel_state)
 
+        self.invoice_method = data['invoice_method']
+        self.shipment_method = data['shipment_method']
+        self.save()
+
         if data['action'] in ['process_manually', 'process_automatically']:
             Sale.quote([self])
             Sale.confirm([self])
