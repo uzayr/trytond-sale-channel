@@ -49,6 +49,17 @@ class Sale:
     # XXX: to identify sale order in external channel
     channel_identifier = fields.Char('Channel Identifier', readonly=True)
 
+    def update_order_from_channel(self):
+        """
+        This method recheck order from external channel and update/create
+        exception when mismatch found
+        """
+        if self.source not in ('manual', 'webshop'):
+            raise NotImplementedError(
+                "This feature has not been implemented for %s channel yet"
+                % self.source
+            )
+
     @classmethod
     def validate(cls, sales):
         super(Sale, cls).validate(sales)
