@@ -23,8 +23,6 @@
                     <label name="timezone"/>
                     <field name="timezone" colspan="3"/>
                 </page>
-                <page string="Taxes" id="taxes">
-                </page>
                 <page string="Advanced" id="advanced">
                 </page>
                 <page string="Last Import / Export Time" id="last_import_export_time" states="{'invisible': Eval('source') == 'manual' }">
