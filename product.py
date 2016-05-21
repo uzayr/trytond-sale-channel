@@ -206,7 +206,7 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
         super(ProductSaleChannelListing, cls).__setup__()
         cls._sql_constraints += [
             (
-                'channel_product_identifier_unique',
+                'channel_product_identifier_uniq',
                 'UNIQUE(channel, product_identifier, product)',
                 'Product is already mapped to this channel with same identifier'
             )
