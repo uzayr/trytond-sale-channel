@@ -11,5 +11,15 @@
             <field name="inherit" ref="res.user_view_form_preferences"/>
             <field name="name">user_form_preferences</field>
         </record>
+
+        <record model="res.user" id="user_trigger_orders">
+            <field name="login">user_cron_trigger_orders</field>
+            <field name="name">Orders Cron Trigger</field>
+            <field name="active" eval="False"/>
+        </record>
+        <record model="res.user-res.group" id="user_trigger_orders_group_admin">
+            <field name="user" ref="user_trigger_orders"/>
+            <field name="group" ref="res.group_admin"/>
+        </record>
     </data>
 </tryton>

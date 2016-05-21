@@ -146,7 +146,7 @@
         <record model="ir.cron" id="cron_import_orders">
             <field name="name">Import Orders</field>
             <field name="request_user" ref="res.user_admin"/>
-            <field name="user" ref="res.user_trigger"/>
+            <field name="user" ref="user_trigger_orders"/>
             <field name="active" eval="True"/>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
@@ -160,7 +160,7 @@
         <record model="ir.cron" id="cron_update_orders">
             <field name="name">Update Orders</field>
             <field name="request_user" ref="res.user_admin"/>
-            <field name="user" ref="res.user_trigger"/>
+            <field name="user" ref="user_trigger_orders"/>
             <field name="active" eval="True"/>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
@@ -174,7 +174,7 @@
         <record model="ir.cron" id="ir_cron_export_product_prices">
             <field name="name">Export Product Prices</field>
             <field name="request_user" ref="res.user_admin"/>
-            <field name="user" ref="res.user_trigger"/>
+            <field name="user" ref="user_trigger_orders"/>
             <field name="active" eval="True"/>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
@@ -187,7 +187,7 @@
         <record model="ir.cron" id="ir_cron_export_inventory">
             <field name="name">Export Inventory</field>
             <field name="request_user" ref="res.user_admin"/>
-            <field name="user" ref="res.user_trigger"/>
+            <field name="user" ref="user_trigger_orders"/>
             <field name="active" eval="False"/>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
