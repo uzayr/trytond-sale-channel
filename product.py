@@ -135,7 +135,9 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
         'product.product', 'Product', required=True, select=True,
         ondelete='CASCADE'
     )
-    product_identifier = fields.Char("Product Identifier")
+    product_identifier = fields.Char(
+        "Product Identifier", select=True, required=True
+    )
     state = fields.Selection([
         ('active', 'Active'),
         ('disabled', 'Disabled'),
@@ -204,9 +206,9 @@ class ProductSaleChannelListing(ModelSQL, ModelView):
         super(ProductSaleChannelListing, cls).__setup__()
         cls._sql_constraints += [
             (
-                'channel_product_unique',
-                'UNIQUE(channel, product)',
-                'Product is already mapped to this channel'
+                'channel_product_identifier_unique',
+                'UNIQUE(channel, product_identifier, product)',
+                'Product is already mapped to this channel with same identifier'
             )
         ]
 
